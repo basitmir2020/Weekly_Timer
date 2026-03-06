@@ -16,8 +16,8 @@ public partial class EditBlockViewModel : ObservableObject
     public bool IsEditing => _existingBlock != null;
 
     [ObservableProperty] private string _timeText = "07:00";
-    [ObservableProperty] private string _selectedTime = "07:00";
-    [ObservableProperty] private List<string> _availableTimes = new();
+    [ObservableProperty] private TimeOption? _selectedTimeOption;
+    [ObservableProperty] private List<TimeOption> _availableTimes = new();
     [ObservableProperty] private string _label = string.Empty;
     [ObservableProperty] private string _icon = "📌";
     [ObservableProperty] private string _category = "routine";
@@ -42,33 +42,38 @@ public partial class EditBlockViewModel : ObservableObject
 
         if (existing != null)
         {
-            TimeText        = existing.Time;
-            SelectedTime    = existing.Time;
-            Label           = existing.Label;
-            Icon            = existing.Icon;
-            Category        = existing.Category;
-            DurationMinutes = existing.DurationMinutes;
+            TimeText           = existing.Time;
+            SelectedTimeOption = AvailableTimes.FirstOrDefault(t => t.Time24 == existing.Time) ?? new TimeOption { Time24 = existing.Time, DisplayTime = existing.Time };
+            Label              = existing.Label;
+            Icon               = existing.Icon;
+            Category           = existing.Category;
+            DurationMinutes    = existing.DurationMinutes;
         }
         else if (AvailableTimes.Any())
         {
-            SelectedTime = AvailableTimes.First();
+            SelectedTimeOption = AvailableTimes.First();
         }
     }
 
     private void PopulateAvailableTimes()
     {
-        // Generate possible times every 30 mins
-        var allTimes = Enumerable.Range(0, 48)
-            .Select(i => TimeSpan.FromMinutes(i * 30).ToString(@"hh\:mm"))
+        var existingTimes = _currentDayBlocks
+            .Select(b => b.Time)
+            .Where(t => TimeSpan.TryParse(t, out _))
+            .Distinct()
+            .Select(t => TimeSpan.Parse(t))
+            .OrderBy(t => t)
             .ToList();
 
-        // Get used times (excluding the currently edited block's time)
-        var usedTimes = _currentDayBlocks
-            .Where(b => _existingBlock == null || b.Time != _existingBlock.Time)
-            .Select(b => b.Time)
-            .ToHashSet();
-
-        AvailableTimes = allTimes.Where(t => !usedTimes.Contains(t)).ToList();
+        var options = new List<TimeOption>();
+        foreach (var ts in existingTimes)
+        {
+            var dt = DateTime.Today.Add(ts);
+            string display = dt.ToString("h:mm tt").ToLower(); // matches "5:30 am"
+            options.Add(new TimeOption { Time24 = ts.ToString(@"hh\:mm"), DisplayTime = display });
+        }
+        
+        AvailableTimes = options;
     }
 
     [RelayCommand]
@@ -81,7 +86,7 @@ public partial class EditBlockViewModel : ObservableObject
         }
 
         var block = _existingBlock ?? new ScheduleBlock();
-        block.Time            = SelectedTime;
+        block.Time            = SelectedTimeOption?.Time24 ?? "07:00";
         block.Label           = Label;
         block.Icon            = Icon;
         block.Category        = Category;
@@ -105,4 +110,10 @@ public partial class EditBlockViewModel : ObservableObject
             await Shell.Current.GoToAsync("..");
         }
     }
+}
+
+public class TimeOption
+{
+    public string Time24 { get; set; } = string.Empty;
+    public string DisplayTime { get; set; } = string.Empty;
 }

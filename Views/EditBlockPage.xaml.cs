@@ -19,7 +19,10 @@ public partial class EditBlockPage : ContentPage
 
     public void LoadBlock(ScheduleBlock? existing, string dayName)
     {
-        var vm = new EditBlockViewModel(_db, dayName, existing);
-        BindingContext = vm;
+        if (BindingContext is not EditBlockViewModel)
+        {
+            var vm = new EditBlockViewModel(_db, dayName, existing);
+            BindingContext = vm;
+        }
     }
 }

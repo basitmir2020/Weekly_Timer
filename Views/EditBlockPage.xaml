@@ -17,7 +17,8 @@
                     <Label Grid.Column="0" Text="⏰  Time" VerticalOptions="Center" WidthRequest="100" />
                     <Picker Grid.Column="1"
                            ItemsSource="{Binding AvailableTimes}"
-                           SelectedItem="{Binding SelectedTime}"
+                           SelectedItem="{Binding SelectedTimeOption}"
+                           ItemDisplayBinding="{Binding DisplayTime}"
                            TextColor="{StaticResource AccentPurple}" />
                 </Grid>
             </Border>

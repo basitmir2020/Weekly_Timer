@@ -288,6 +288,9 @@ public partial class MainViewModel : ObservableObject
                     return 0;
                 });
                 
+                // Force UI to pick up the brand new list ordering
+                _fullSchedule[ActiveDay] = new List<ScheduleBlock>(targetList);
+                
                 ApplyFilter();
                 UpdateDayStats();
                 UpdateWeekStats();
