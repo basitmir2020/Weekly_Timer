@@ -30,8 +30,16 @@ public class NotificationService : INotificationService
             Title          = title,
             Description    = message,
             ReturningData  = "WeeklyBlueprintTracker",
+            CategoryType   = NotificationCategoryType.Alarm,
             Schedule       = new NotificationRequestSchedule { NotifyTime = scheduleTime }
         };
+
+#if ANDROID
+        request.Android = new Plugin.LocalNotification.AndroidOption.AndroidOptions 
+        { 
+            Priority = Plugin.LocalNotification.AndroidOption.AndroidPriority.Max 
+        };
+#endif
 
         LocalNotificationCenter.Current.Show(request);
         return Task.CompletedTask;
