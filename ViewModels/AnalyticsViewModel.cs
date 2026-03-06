@@ -19,6 +19,12 @@ public partial class AnalyticsViewModel : ObservableObject
     [ObservableProperty] private ObservableCollection<CategoryBreakdown> _categoryBreakdown = new();
     [ObservableProperty] private bool _isLoading;
 
+    [ObservableProperty] private bool _hasWeeklyGoals;
+    [ObservableProperty] private string _goalCountdownText = string.Empty;
+    [ObservableProperty] private string _goalsProgressText = string.Empty;
+
+    public ObservableCollection<GoalTrackerItem> WeeklyGoalItems { get; } = new();
+
     public AnalyticsViewModel(IStreakService streakService, IDatabaseService databaseService)
     {
         _streakService  = streakService;
@@ -65,8 +71,66 @@ public partial class AnalyticsViewModel : ObservableObject
             }
 
             TotalCompleteDays = streakRecords.Count(s => s.IsComplete);
+            
+            await LoadWeeklyGoalsAsync();
         }
         finally { IsLoading = false; }
+    }
+
+    private async Task LoadWeeklyGoalsAsync()
+    {
+        WeeklyGoalItems.Clear();
+        HasWeeklyGoals = false;
+        GoalCountdownText = string.Empty;
+        GoalsProgressText = string.Empty;
+
+        var weekStart = GetMonday(DateTime.Today).ToString("yyyy-MM-dd");
+        var goal = await _databaseService.GetWeeklyGoalAsync(weekStart);
+        if (goal == null)
+            return;
+
+        AddGoalIfPresent("DSA Topic", goal.DSATopic, goal.DSADone);
+        AddGoalIfPresent("Web Dev", goal.WebDevFeature, goal.WebDevDone);
+        AddGoalIfPresent("Habit", goal.HabitFocus, goal.HabitDone);
+
+        if (WeeklyGoalItems.Count == 0)
+            return;
+
+        int completed = WeeklyGoalItems.Count(g => g.IsDone);
+        int total = WeeklyGoalItems.Count;
+        int daysLeft = GetDaysLeftInWeek(DateTime.Today);
+
+        GoalsProgressText = $"{completed}/{total} completed";
+        GoalCountdownText = daysLeft == 0
+            ? "Last day to complete this week's goals"
+            : $"{daysLeft} day{(daysLeft == 1 ? string.Empty : "s")} left this week";
+        HasWeeklyGoals = true;
+    }
+
+    private void AddGoalIfPresent(string title, string goalText, bool isDone)
+    {
+        if (string.IsNullOrWhiteSpace(goalText))
+            return;
+
+        WeeklyGoalItems.Add(new GoalTrackerItem
+        {
+            Title = title,
+            GoalText = goalText.Trim(),
+            IsDone = isDone
+        });
+    }
+
+    private static DateTime GetMonday(DateTime date)
+    {
+        int diff = (7 + (date.DayOfWeek - DayOfWeek.Monday)) % 7;
+        return date.AddDays(-diff).Date;
+    }
+
+    private static int GetDaysLeftInWeek(DateTime date)
+    {
+        var weekEnd = GetMonday(date).AddDays(6);
+        var days = (weekEnd.Date - date.Date).Days;
+        return days < 0 ? 0 : days;
     }
 }
 
@@ -92,4 +156,13 @@ public class CategoryBreakdown
     public int Minutes { get; set; }
     public string Color { get; set; } = "#818cf8";
     public string Label => $"{Category} ({Minutes / 60}h {Minutes % 60}m)";
+}
+
+public class GoalTrackerItem
+{
+    public string Title { get; set; } = string.Empty;
+    public string GoalText { get; set; } = string.Empty;
+    public bool IsDone { get; set; }
+    public string StatusText => IsDone ? "✓" : "○";
+    public string StatusColor => IsDone ? "#34d399" : "#94a3b8";
 }

@@ -42,15 +42,6 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private int _currentStreak;
 
-    [ObservableProperty]
-    private bool _hasWeeklyGoals;
-
-    [ObservableProperty]
-    private string _goalCountdownText = string.Empty;
-
-    [ObservableProperty]
-    private string _goalsProgressText = string.Empty;
-
     // Focus Mode (spec §8.16) — shows only current + next 2 blocks; not persisted
     [ObservableProperty]
     private bool _isFocusMode;
@@ -58,7 +49,6 @@ public partial class MainViewModel : ObservableObject
     public ObservableCollection<ScheduleBlock> FilteredBlocks { get; } = new();
     public ObservableCollection<DayOverviewViewModel> WeekStats { get; } = new();
     public ObservableCollection<CategoryStat> ActiveCategories { get; } = new();
-    public ObservableCollection<GoalTrackerItem> WeeklyGoalItems { get; } = new();
 
     public MainViewModel(IPersistenceService persistenceService, IDatabaseService databaseService, IStreakService streakService, INotificationService notificationService)
     {
@@ -108,9 +98,6 @@ public partial class MainViewModel : ObservableObject
             // Keep streak storage consistent with today's completion state.
             await SyncTodayStreakAsync();
 
-            // Refresh weekly goals snapshot for the home screen.
-            await LoadWeeklyGoalsAsync();
-
             // 5. Calculate Current Streak
             if (!IsActiveDayToday())
             {
@@ -136,62 +123,6 @@ public partial class MainViewModel : ObservableObject
         {
             System.Diagnostics.Debug.WriteLine($"Error while scheduling notifications: {ex.Message}");
         }
-    }
-
-    private async Task LoadWeeklyGoalsAsync()
-    {
-        WeeklyGoalItems.Clear();
-        HasWeeklyGoals = false;
-        GoalCountdownText = string.Empty;
-        GoalsProgressText = string.Empty;
-
-        var weekStart = GetMonday(DateTime.Today).ToString("yyyy-MM-dd");
-        var goal = await _databaseService.GetWeeklyGoalAsync(weekStart);
-        if (goal == null)
-            return;
-
-        AddGoalIfPresent("DSA Topic", goal.DSATopic, goal.DSADone);
-        AddGoalIfPresent("Web Dev", goal.WebDevFeature, goal.WebDevDone);
-        AddGoalIfPresent("Habit", goal.HabitFocus, goal.HabitDone);
-
-        if (WeeklyGoalItems.Count == 0)
-            return;
-
-        int completed = WeeklyGoalItems.Count(g => g.IsDone);
-        int total = WeeklyGoalItems.Count;
-        int daysLeft = GetDaysLeftInWeek(DateTime.Today);
-
-        GoalsProgressText = $"{completed}/{total} completed";
-        GoalCountdownText = daysLeft == 0
-            ? "Last day to complete this week's goals"
-            : $"{daysLeft} day{(daysLeft == 1 ? string.Empty : "s")} left this week";
-        HasWeeklyGoals = true;
-    }
-
-    private void AddGoalIfPresent(string title, string goalText, bool isDone)
-    {
-        if (string.IsNullOrWhiteSpace(goalText))
-            return;
-
-        WeeklyGoalItems.Add(new GoalTrackerItem
-        {
-            Title = title,
-            GoalText = goalText.Trim(),
-            IsDone = isDone
-        });
-    }
-
-    private static DateTime GetMonday(DateTime date)
-    {
-        int diff = (7 + (date.DayOfWeek - DayOfWeek.Monday)) % 7;
-        return date.AddDays(-diff).Date;
-    }
-
-    private static int GetDaysLeftInWeek(DateTime date)
-    {
-        var weekEnd = GetMonday(date).AddDays(6);
-        var days = (weekEnd.Date - date.Date).Days;
-        return days < 0 ? 0 : days;
     }
 
     private void EnsureActiveDayIsValid()
@@ -331,27 +262,41 @@ public partial class MainViewModel : ObservableObject
         await Shell.Current.Navigation.PushModalAsync(page);
     }
 
-    /// <summary>Navigate to EditBlockPage to add a new empty block (spec §8.14)</summary>
     [RelayCommand]
     private async Task AddBlockAsync()
     {
-        var page = new Views.EditBlockPage(_databaseService);
-        page.LoadBlock(null, ActiveDay);
-        if (page.BindingContext is ViewModels.EditBlockViewModel vm)
+        var currentBlocks = _fullSchedule.ContainsKey(ActiveDay) ? _fullSchedule[ActiveDay] : new List<ScheduleBlock>();
+        var vm = new ViewModels.EditBlockViewModel(_databaseService, ActiveDay, currentDayBlocks: currentBlocks);
+        
+        vm.OnSaved = (block, isNew) =>
         {
-            vm.OnSaved = (block, isNew) =>
+            if (isNew && _fullSchedule.ContainsKey(ActiveDay))
             {
-                if (isNew && _fullSchedule.ContainsKey(ActiveDay))
+                var targetList = _fullSchedule[ActiveDay];
+                targetList.Add(block);
+                
+                // Sort chronologically by time
+                targetList.Sort((a, b) => 
                 {
-                    _fullSchedule[ActiveDay].Add(block);
-                    ApplyFilter();
-                    UpdateDayStats();
-                    UpdateWeekStats();
-                    _ = _persistenceService.SaveStateAsync(STATE_KEY, _completedState);
-                    _ = SyncTodayStreakAsync();
-                }
-            };
-        }
+                    TimeSpan tempA, tempB;
+                    bool aValid = TimeSpan.TryParse(a.Time, out tempA);
+                    bool bValid = TimeSpan.TryParse(b.Time, out tempB);
+                    
+                    if (aValid && bValid) return tempA.CompareTo(tempB);
+                    if (aValid) return -1;
+                    if (bValid) return 1;
+                    return 0;
+                });
+                
+                ApplyFilter();
+                UpdateDayStats();
+                UpdateWeekStats();
+                _ = _persistenceService.SaveStateAsync(STATE_KEY, _completedState);
+                _ = SyncTodayStreakAsync();
+            }
+        };
+
+        var page = new Views.EditBlockPage(_databaseService) { BindingContext = vm };
         await Shell.Current.Navigation.PushAsync(page);
     }
 
@@ -511,13 +456,4 @@ public class CategoryStat
     public string Key { get; set; }
     public int Count { get; set; }
     public string DisplayText => $"{Key.ToUpper()} ({Count})";
-}
-
-public class GoalTrackerItem
-{
-    public string Title { get; set; } = string.Empty;
-    public string GoalText { get; set; } = string.Empty;
-    public bool IsDone { get; set; }
-    public string StatusText => IsDone ? "✓" : "○";
-    public string StatusColor => IsDone ? "#34d399" : "#94a3b8";
 }

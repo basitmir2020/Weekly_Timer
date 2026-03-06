@@ -147,31 +147,7 @@
                     </HorizontalStackLayout>
                 </Border>
 
-                <!-- Weekly Goals Snapshot -->
-                <Border IsVisible="{Binding HasWeeklyGoals}" Style="{StaticResource CardStyle}">
-                    <VerticalStackLayout Spacing="12">
-                        <Grid ColumnDefinitions="*, Auto">
-                            <Label Grid.Column="0" Text="🎯 Weekly Goals" TextColor="{StaticResource TextHeading}" FontAttributes="Bold" FontSize="16" />
-                            <Label Grid.Column="1" Text="{Binding GoalsProgressText}" TextColor="{StaticResource TextMuted}" FontSize="12" VerticalOptions="Center" />
-                        </Grid>
 
-                        <Label Text="{Binding GoalCountdownText}" TextColor="#facc15" FontSize="12" />
-
-                        <VerticalStackLayout Spacing="8" BindableLayout.ItemsSource="{Binding WeeklyGoalItems}">
-                            <BindableLayout.ItemTemplate>
-                                <DataTemplate x:DataType="vm:GoalTrackerItem">
-                                    <Grid ColumnDefinitions="Auto, *" ColumnSpacing="8">
-                                        <Label Grid.Column="0" Text="{Binding StatusText}" TextColor="{Binding StatusColor}" FontSize="14" VerticalOptions="Center" />
-                                        <HorizontalStackLayout Grid.Column="1" Spacing="6">
-                                            <Label Text="{Binding Title}" FontAttributes="Bold" FontSize="12" />
-                                            <Label Text="{Binding GoalText}" TextColor="{StaticResource TextMuted}" FontSize="12" LineBreakMode="TailTruncation" />
-                                        </HorizontalStackLayout>
-                                    </Grid>
-                                </DataTemplate>
-                            </BindableLayout.ItemTemplate>
-                        </VerticalStackLayout>
-                    </VerticalStackLayout>
-                </Border>
 
                 <!-- Category Filters Horizontal List -->
                 <ScrollView Orientation="Horizontal" HorizontalScrollBarVisibility="Never">

@@ -15,12 +15,10 @@
             <Border Style="{StaticResource CardStyle}">
                 <Grid ColumnDefinitions="Auto,*">
                     <Label Grid.Column="0" Text="⏰  Time" VerticalOptions="Center" WidthRequest="100" />
-                    <Entry Grid.Column="1"
-                           Text="{Binding TimeText}"
-                           Placeholder="HH:MM (24-hr)"
-                           TextColor="{StaticResource TextBody}"
-                           BackgroundColor="Transparent"
-                           Keyboard="Text" />
+                    <Picker Grid.Column="1"
+                           ItemsSource="{Binding AvailableTimes}"
+                           SelectedItem="{Binding SelectedTime}"
+                           TextColor="{StaticResource AccentPurple}" />
                 </Grid>
             </Border>
 
