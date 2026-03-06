@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="WeeklyTimetable.Views.OnboardingPage"
+             BackgroundColor="{StaticResource BgPage}"
+             Shell.NavBarIsVisible="False">
+
+    <Grid RowDefinitions="*,Auto">
+        <CarouselView Grid.Row="0" x:Name="OnboardingCarousel" ItemsSource="{Binding Slides}">
+            <CarouselView.ItemTemplate>
+                <DataTemplate>
+                    <VerticalStackLayout VerticalOptions="Center" HorizontalOptions="Center" Spacing="24" Padding="40">
+                        <Label Text="{Binding Emoji}"  FontSize="72" HorizontalOptions="Center" />
+                        <Label Text="{Binding Title}"  Style="{StaticResource H1}" HorizontalOptions="Center" />
+                        <Label Text="{Binding Body}"   TextColor="{StaticResource TextBody}" HorizontalOptions="Center" HorizontalTextAlignment="Center" FontSize="16" />
+                    </VerticalStackLayout>
+                </DataTemplate>
+            </CarouselView.ItemTemplate>
+        </CarouselView>
+
+        <VerticalStackLayout Grid.Row="1" Spacing="16" Padding="32,16,32,40">
+            <IndicatorView x:Name="pageIndicator" HorizontalOptions="Center"
+                           SelectedIndicatorColor="{StaticResource AccentPurple}"
+                           IndicatorColor="{StaticResource BorderVisible}" IndicatorSize="8" />
+            <Button Text="Get Started" Command="{Binding FinishCommand}"
+                    BackgroundColor="{StaticResource AccentPurple}" TextColor="{StaticResource BgPage}"
+                    FontAttributes="Bold" CornerRadius="12" HeightRequest="52" />
+            <Button Text="Skip" Command="{Binding FinishCommand}"
+                    BackgroundColor="Transparent" TextColor="{StaticResource TextMuted}" />
+        </VerticalStackLayout>
+    </Grid>
+</ContentPage>

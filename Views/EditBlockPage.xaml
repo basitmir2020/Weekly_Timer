@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="WeeklyTimetable.Views.EditBlockPage"
+             BackgroundColor="{StaticResource BgPage}"
+             Title="{Binding IsEditing, StringFormat='{0}'}" >
+
+    <ScrollView>
+        <VerticalStackLayout Spacing="16" Padding="16">
+
+            <Label Text="{Binding IsEditing, StringFormat='Editing: {0}'}"
+                   Style="{StaticResource H2}" />
+
+            <!-- Time -->
+            <Border Style="{StaticResource CardStyle}">
+                <Grid ColumnDefinitions="Auto,*">
+                    <Label Grid.Column="0" Text="⏰  Time" VerticalOptions="Center" WidthRequest="100" />
+                    <Entry Grid.Column="1"
+                           Text="{Binding TimeText}"
+                           Placeholder="HH:MM (24-hr)"
+                           TextColor="{StaticResource TextBody}"
+                           BackgroundColor="Transparent"
+                           Keyboard="Text" />
+                </Grid>
+            </Border>
+
+            <!-- Label -->
+            <Border Style="{StaticResource CardStyle}">
+                <Grid ColumnDefinitions="Auto,*">
+                    <Label Grid.Column="0" Text="📝  Label" VerticalOptions="Center" WidthRequest="100" />
+                    <Entry Grid.Column="1"
+                           Text="{Binding Label}"
+                           Placeholder="e.g. DSA Practice"
+                           TextColor="{StaticResource TextBody}"
+                           BackgroundColor="Transparent" />
+                </Grid>
+            </Border>
+
+            <!-- Icon -->
+            <Border Style="{StaticResource CardStyle}">
+                <Grid ColumnDefinitions="Auto,*">
+                    <Label Grid.Column="0" Text="🎨  Icon" VerticalOptions="Center" WidthRequest="100" />
+                    <Entry Grid.Column="1"
+                           Text="{Binding Icon}"
+                           Placeholder="Emoji e.g. 🧠"
+                           TextColor="{StaticResource TextBody}"
+                           BackgroundColor="Transparent" />
+                </Grid>
+            </Border>
+
+            <!-- Category -->
+            <Border Style="{StaticResource CardStyle}">
+                <Grid ColumnDefinitions="Auto,*">
+                    <Label Grid.Column="0" Text="🏷️  Category" VerticalOptions="Center" WidthRequest="100" />
+                    <Picker Grid.Column="1"
+                            ItemsSource="{Binding Categories}"
+                            SelectedItem="{Binding Category}"
+                            TextColor="{StaticResource AccentPurple}" />
+                </Grid>
+            </Border>
+
+            <!-- Duration -->
+            <Border Style="{StaticResource CardStyle}">
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="{Binding DurationMinutes, StringFormat='⏱️  Duration: {0} min'}" />
+                    <Slider Minimum="5" Maximum="240" Value="{Binding DurationMinutes}"
+                            ThumbColor="{StaticResource AccentPurple}"
+                            MinimumTrackColor="{StaticResource AccentPurple}" />
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Save -->
+            <Button Text="Save Block" Command="{Binding SaveCommand}"
+                    BackgroundColor="{StaticResource AccentPurple}"
+                    TextColor="{StaticResource BgPage}"
+                    FontAttributes="Bold" CornerRadius="12" HeightRequest="52" />
+
+            <!-- Delete (only when editing) -->
+            <Button Text="Delete Block" Command="{Binding DeleteCommand}"
+                    IsVisible="{Binding IsEditing}"
+                    BackgroundColor="Transparent"
+                    TextColor="#ef4444"
+                    BorderColor="#ef4444" BorderWidth="1"
+                    CornerRadius="12" HeightRequest="48" />
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

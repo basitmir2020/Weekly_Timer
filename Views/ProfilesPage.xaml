@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="WeeklyTimetable.Views.ProfilesPage"
+             BackgroundColor="{StaticResource BgPage}"
+             Title="Schedule Profiles">
+
+    <Grid RowDefinitions="*, Auto">
+        <CollectionView Grid.Row="0" ItemsSource="{Binding Profiles}">
+            <CollectionView.ItemTemplate>
+                <DataTemplate>
+                    <Border Style="{StaticResource CardStyle}" Margin="16,6">
+                        <Grid ColumnDefinitions="*, Auto, Auto">
+                            <VerticalStackLayout Grid.Column="0" VerticalOptions="Center">
+                                <Label Text="{Binding Name}" FontAttributes="Bold" FontSize="16" />
+                                <Label Text="{Binding IsActive, StringFormat='Active: {0}'}" Style="{StaticResource MonoLabel}" />
+                            </VerticalStackLayout>
+                            <Button Grid.Column="1" Text="Activate" Margin="8,0"
+                                    Command="{Binding Source={RelativeSource AncestorType={x:Type ContentPage}}, Path=BindingContext.ActivateProfileCommand}"
+                                    CommandParameter="{Binding .}"
+                                    BackgroundColor="{StaticResource AccentPurple}" TextColor="{StaticResource BgPage}"
+                                    CornerRadius="8" FontSize="12" HeightRequest="36" />
+                            <Label Grid.Column="2" Text="✓" IsVisible="{Binding IsActive}"
+                                   TextColor="{StaticResource SuccessGreen}" FontSize="22" VerticalOptions="Center" />
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+    </Grid>
+</ContentPage>

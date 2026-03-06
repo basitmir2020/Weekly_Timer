@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="WeeklyTimetable.Views.ProductivityPage"
+             BackgroundColor="{StaticResource BgPage}"
+             Title="Productivity Tips">
+
+    <ScrollView>
+        <VerticalStackLayout Spacing="8" Padding="16">
+            <Label Text="💡 8 Productivity Principles" Style="{StaticResource H2}" Margin="0,0,0,8" />
+            <Label Text="Baked into your schedule every day." TextColor="{StaticResource TextMuted}" FontSize="13" Margin="0,0,0,16" />
+
+            <!-- Card 1 -->
+            <Border Style="{StaticResource CardStyle}">
+                <VerticalStackLayout Spacing="6">
+                    <Label Text="🍅  Pomodoro Blocks" FontAttributes="Bold" FontSize="15" />
+                    <Label Text="25 min on + 5 min off. After 4 cycles, take a 20 min long break. Your brain needs rest to consolidate learning." TextColor="{StaticResource TextBody}" FontSize="13" />
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Card 2 -->
+            <Border Style="{StaticResource CardStyle}">
+                <VerticalStackLayout Spacing="6">
+                    <Label Text="📵  Phone-Free Zones" FontAttributes="Bold" FontSize="15" />
+                    <Label Text="Do Not Disturb during 7–8:30 AM and 7–8:30 PM study windows. Interruptions break deep focus." TextColor="{StaticResource TextBody}" FontSize="13" />
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Card 3 -->
+            <Border Style="{StaticResource CardStyle}">
+                <VerticalStackLayout Spacing="6">
+                    <Label Text="🧊  Eat the Frog" FontAttributes="Bold" FontSize="15" />
+                    <Label Text="Tackle the hardest DSA problem or concept first each morning. Momentum builds naturally after the hardest task is done." TextColor="{StaticResource TextBody}" FontSize="13" />
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Card 4 -->
+            <Border Style="{StaticResource CardStyle}">
+                <VerticalStackLayout Spacing="6">
+                    <Label Text="🔁  Spaced Repetition" FontAttributes="Bold" FontSize="15" />
+                    <Label Text="Review DSA + Web Dev every Sunday via Anki or Notion. Spaced review encodes knowledge into long-term memory." TextColor="{StaticResource TextBody}" FontSize="13" />
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Card 5 -->
+            <Border Style="{StaticResource CardStyle}">
+                <VerticalStackLayout Spacing="6">
+                    <Label Text="🎯  Theme Alternation" FontAttributes="Bold" FontSize="15" />
+                    <Label Text="DSA ↔ Web Dev alternate each morning/evening slot. Prevents cognitive fatigue and keeps each domain fresh." TextColor="{StaticResource TextBody}" FontSize="13" />
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Card 6 -->
+            <Border Style="{StaticResource CardStyle}">
+                <VerticalStackLayout Spacing="6">
+                    <Label Text="🛑  Hard Stop 9:30 PM" FontAttributes="Bold" FontSize="15" />
+                    <Label Text="All screens off at 9:30 PM. 10 PM–2 AM deep sleep consolidates everything you learned today." TextColor="{StaticResource TextBody}" FontSize="13" />
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Card 7 -->
+            <Border Style="{StaticResource CardStyle}">
+                <VerticalStackLayout Spacing="6">
+                    <Label Text="📋  3 Weekly Micro-Goals" FontAttributes="Bold" FontSize="15" />
+                    <Label Text="Set every Sunday: 1 DSA topic, 1 Web Dev feature, 1 habit. Small targets are achievable; big ambitions break focus." TextColor="{StaticResource TextBody}" FontSize="13" />
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Card 8 -->
+            <Border Style="{StaticResource CardStyle}">
+                <VerticalStackLayout Spacing="6">
+                    <Label Text="📓  5-Min Study Log" FontAttributes="Bold" FontSize="15" />
+                    <Label Text="Nightly 2–3 sentence log. Builds accountability, surfaces patterns, and makes your effort visible over time." TextColor="{StaticResource TextBody}" FontSize="13" />
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Tagline -->
+            <Label Text="&quot;Consistency beats intensity — show up every day, even at 80%&quot;"
+                   TextColor="{StaticResource AccentPurple}" FontAttributes="Italic"
+                   HorizontalOptions="Center" HorizontalTextAlignment="Center"
+                   Margin="0,16,0,32" FontSize="14" />
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

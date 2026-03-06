@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:controls="clr-namespace:WeeklyTimetable.Controls"
+             x:Class="WeeklyTimetable.Views.AnalyticsDashboardPage"
+             BackgroundColor="{StaticResource BgPage}"
+             Title="Analytics">
+
+    <ScrollView>
+        <VerticalStackLayout Spacing="16" Padding="16">
+
+            <!-- Streak Summary Cards -->
+            <Label Text="📊 Progress Overview" Style="{StaticResource H2}" />
+            <Grid ColumnDefinitions="*,*,*" ColumnSpacing="12">
+                <Border Grid.Column="0" Style="{StaticResource CardStyle}">
+                    <VerticalStackLayout HorizontalOptions="Center" Spacing="4">
+                        <Label Text="🔥" FontSize="24" HorizontalOptions="Center" />
+                        <Label Text="{Binding CurrentStreak}" FontSize="28" FontAttributes="Bold" TextColor="{StaticResource AccentPurple}" HorizontalOptions="Center" />
+                        <Label Text="Current" Style="{StaticResource MonoLabel}" HorizontalOptions="Center" />
+                    </VerticalStackLayout>
+                </Border>
+                <Border Grid.Column="1" Style="{StaticResource CardStyle}">
+                    <VerticalStackLayout HorizontalOptions="Center" Spacing="4">
+                        <Label Text="🏆" FontSize="24" HorizontalOptions="Center" />
+                        <Label Text="{Binding LongestStreak}" FontSize="28" FontAttributes="Bold" TextColor="{StaticResource SuccessGreen}" HorizontalOptions="Center" />
+                        <Label Text="Best" Style="{StaticResource MonoLabel}" HorizontalOptions="Center" />
+                    </VerticalStackLayout>
+                </Border>
+                <Border Grid.Column="2" Style="{StaticResource CardStyle}">
+                    <VerticalStackLayout HorizontalOptions="Center" Spacing="4">
+                        <Label Text="📅" FontSize="24" HorizontalOptions="Center" />
+                        <Label Text="{Binding TotalCompleteDays}" FontSize="28" FontAttributes="Bold" TextColor="{StaticResource TextHeading}" HorizontalOptions="Center" />
+                        <Label Text="Complete" Style="{StaticResource MonoLabel}" HorizontalOptions="Center" />
+                    </VerticalStackLayout>
+                </Border>
+            </Grid>
+
+            <!-- Heatmap -->
+            <Label Text="📅 12-Week Heatmap" Style="{StaticResource H2}" Margin="0,8,0,0" />
+            <Border Style="{StaticResource CardStyle}">
+                <controls:HeatmapGridControl HeatmapCells="{Binding HeatmapCells}" />
+            </Border>
+
+            <!-- Mood Trend -->
+            <Label Text="😊 Mood Trend (14 days)" Style="{StaticResource H2}" Margin="0,8,0,0" />
+            <Border Style="{StaticResource CardStyle}">
+                <CollectionView ItemsSource="{Binding MoodTrend}" HeightRequest="120">
+                    <CollectionView.ItemsLayout>
+                        <LinearItemsLayout Orientation="Horizontal" ItemSpacing="12" />
+                    </CollectionView.ItemsLayout>
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate>
+                            <VerticalStackLayout Spacing="4" WidthRequest="48">
+                                <Label Text="{Binding Energy}" FontSize="20" HorizontalOptions="Center" TextColor="{StaticResource AccentPurple}" />
+                                <Label Text="{Binding DateLabel}" Style="{StaticResource MonoLabel}" HorizontalOptions="Center" />
+                            </VerticalStackLayout>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+            </Border>
+
+            <!-- Reload -->
+            <Button Text="Refresh" Command="{Binding LoadCommand}"
+                    BackgroundColor="Transparent" TextColor="{StaticResource AccentPurple}"
+                    BorderColor="{StaticResource BorderVisible}" BorderWidth="1" CornerRadius="8" />
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

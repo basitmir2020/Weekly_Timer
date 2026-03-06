@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="WeeklyTimetable.Controls.StreakBadgeControl"
+             x:Name="thisControl">
+    <Border BackgroundColor="{StaticResource BgCardDim}"
+            Stroke="{StaticResource BorderLight}"
+            StrokeThickness="1"
+            StrokeShape="RoundRectangle 12"
+            Padding="8, 4"
+            HeightRequest="32">
+        <Border.GestureRecognizers>
+            <TapGestureRecognizer Command="{Binding Source={x:Reference thisControl}, Path=Command}" />
+        </Border.GestureRecognizers>
+        
+        <StackLayout Orientation="Horizontal" Spacing="6" VerticalOptions="Center">
+            <!-- Flame Icon -->
+            <Label Text="🔥" 
+                   FontSize="14" 
+                   VerticalOptions="Center" />
+            
+            <!-- Streak Count value -->
+            <Label Text="{Binding Source={x:Reference thisControl}, Path=StreakCount}" 
+                   FontSize="13"
+                   FontFamily="DMMono"
+                   FontAttributes="Bold"
+                   SemanticProperties.Description="Current consecutive days stretch count"
+                   TextColor="{StaticResource TextHeading}"
+                   VerticalOptions="Center" />
+        </StackLayout>
+    </Border>
+</ContentView>

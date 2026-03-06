@@ -1,0 +1,34 @@
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+<ResourceDictionary 
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml">
+
+    <!-- Global App Colors -->
+    <Color x:Key="BgPage">#07090f</Color>
+    <Color x:Key="BgHeader">#0a0c14</Color>
+    <Color x:Key="BgNav">#08090f</Color>
+    <Color x:Key="BgCardDim">#09090f</Color>
+    
+    <Color x:Key="BorderSubtle">#0d1117</Color>
+    <Color x:Key="BorderLight">#0f172a</Color>
+    <Color x:Key="BorderVisible">#1e293b</Color>
+
+    <Color x:Key="TextBody">#cbd5e1</Color>
+    <Color x:Key="TextHeading">#f1f5f9</Color>
+    <Color x:Key="TextMuted">#334155</Color>
+    <Color x:Key="TextVeryMuted">#1e293b</Color>
+    
+    <Color x:Key="AccentPurple">#818cf8</Color>
+    <Color x:Key="SuccessGreen">#22c55e</Color>
+
+    <!-- Category Colors -->
+    <Color x:Key="CatSleep">#3b82f6</Color>
+    <Color x:Key="CatWork">#22c55e</Color>
+    <Color x:Key="CatStudy">#8b5cf6</Color>
+    <Color x:Key="CatExercise">#f97316</Color>
+    <Color x:Key="CatMeal">#f59e0b</Color>
+    <Color x:Key="CatBreak">#14b8a6</Color>
+    <Color x:Key="CatRelax">#ec4899</Color>
+    <Color x:Key="CatRoutine">#64748b</Color>
+
+</ResourceDictionary>

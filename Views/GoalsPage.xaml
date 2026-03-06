@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:WeeklyTimetable.ViewModels"
+             xmlns:converters="clr-namespace:WeeklyTimetable.Converters"
+             x:Class="WeeklyTimetable.Views.GoalsPage"
+             BackgroundColor="{DynamicResource BgPage}"
+             Title="Weekly Goals">
+
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <converters:BoolToStringConverter x:Key="BoolToStringConverter" />
+        </ResourceDictionary>
+    </ContentPage.Resources>
+
+    <ScrollView>
+        <VerticalStackLayout Spacing="16" Padding="16">
+            <Label Text="🎯 This Week's Targets" Style="{StaticResource H2}" />
+            <Label Text="Set by Sunday. Review every Friday." TextColor="{StaticResource TextMuted}" FontSize="13" />
+
+            <!-- DSA Goal -->
+            <Border Style="{StaticResource CardStyle}">
+                <Grid ColumnDefinitions="*, Auto" RowDefinitions="Auto, Auto">
+                    <Label Grid.Row="0" Grid.Column="0" Text="🧠  DSA Topic" FontAttributes="Bold" />
+                    <Label Grid.Row="0" Grid.Column="1" Text="✓" IsVisible="{Binding DsaDone}" TextColor="{StaticResource SuccessGreen}" FontSize="20" />
+                    <Entry Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2"
+                           Placeholder="e.g. Binary Trees, Dynamic Programming"
+                           PlaceholderColor="{StaticResource TextMuted}"
+                           Text="{Binding DsaTopic}" TextColor="{StaticResource TextBody}"
+                           BackgroundColor="Transparent" />
+                    <Button Grid.Row="1" Grid.Column="1" Text="{Binding DsaDone, Converter={StaticResource BoolToStringConverter}, ConverterParameter='Undo|Mark Done'}"
+                            Command="{Binding ToggleDsaCommand}"
+                            BackgroundColor="Transparent" TextColor="{StaticResource AccentPurple}" FontSize="12" />
+                </Grid>
+            </Border>
+
+            <!-- Web Dev Goal -->
+            <Border Style="{StaticResource CardStyle}">
+                <Grid ColumnDefinitions="*, Auto" RowDefinitions="Auto, Auto">
+                    <Label Grid.Row="0" Grid.Column="0" Text="💻  Web Dev Feature" FontAttributes="Bold" />
+                    <Label Grid.Row="0" Grid.Column="1" Text="✓" IsVisible="{Binding WebDevDone}" TextColor="{StaticResource SuccessGreen}" FontSize="20" />
+                    <Entry Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2"
+                           Placeholder="e.g. Build Auth system, Deploy on Vercel"
+                           PlaceholderColor="{StaticResource TextMuted}"
+                           Text="{Binding WebDevFeature}" TextColor="{StaticResource TextBody}"
+                           BackgroundColor="Transparent" />
+                </Grid>
+            </Border>
+
+            <!-- Habit Goal -->
+            <Border Style="{StaticResource CardStyle}">
+                <Grid ColumnDefinitions="*, Auto" RowDefinitions="Auto, Auto">
+                    <Label Grid.Row="0" Grid.Column="0" Text="🌱  Habit Focus" FontAttributes="Bold" />
+                    <Label Grid.Row="0" Grid.Column="1" Text="✓" IsVisible="{Binding HabitDone}" TextColor="{StaticResource SuccessGreen}" FontSize="20" />
+                    <Entry Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2"
+                           Placeholder="e.g. Sleep by 10PM every night"
+                           PlaceholderColor="{StaticResource TextMuted}"
+                           Text="{Binding HabitFocus}" TextColor="{StaticResource TextBody}"
+                           BackgroundColor="Transparent" />
+                </Grid>
+            </Border>
+
+            <Button Text="Save Goals" Command="{Binding SaveGoalsCommand}"
+                    BackgroundColor="{StaticResource AccentPurple}" TextColor="{StaticResource BgPage}"
+                    FontAttributes="Bold" CornerRadius="12" HeightRequest="48" />
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

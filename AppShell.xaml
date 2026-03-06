@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Shell
+    x:Class="WeeklyTimetable.AppShell"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:views="clr-namespace:WeeklyTimetable.Views"
+    Shell.TabBarIsVisible="True"
+    Shell.TabBarBackgroundColor="{DynamicResource BgNav}"
+    Shell.TabBarForegroundColor="{DynamicResource TextMuted}"
+    Shell.TabBarUnselectedColor="{DynamicResource TextMuted}"
+    Shell.TabBarTitleColor="{DynamicResource AccentPurple}"
+    Title="WeeklyTimetable">
+
+    <TabBar>
+        <Tab Title="Schedule">
+            <ShellContent Title="Schedule" ContentTemplate="{DataTemplate views:MainPage}" Route="MainPage" />
+        </Tab>
+        <Tab Title="Focus">
+            <ShellContent Title="Focus Timer" ContentTemplate="{DataTemplate views:PomodoroTimerPage}" Route="PomodoroTimerPage" />
+        </Tab>
+        <Tab Title="Insights">
+            <ShellContent Title="Analytics" ContentTemplate="{DataTemplate views:AnalyticsDashboardPage}" Route="AnalyticsDashboardPage" />
+        </Tab>
+        <Tab Title="Goals">
+            <ShellContent Title="Goals" ContentTemplate="{DataTemplate views:GoalsPage}" Route="GoalsPage" />
+        </Tab>
+        <Tab Title="Settings">
+            <ShellContent Title="Settings" ContentTemplate="{DataTemplate views:SettingsPage}" Route="SettingsPage" />
+        </Tab>
+    </TabBar>
+
+    <!-- Routed pages (not in tab bar) -->
+    <Shell.Items>
+        <ShellContent Route="OnboardingPage" ContentTemplate="{DataTemplate views:OnboardingPage}" Shell.TabBarIsVisible="False" />
+    </Shell.Items>
+</Shell>

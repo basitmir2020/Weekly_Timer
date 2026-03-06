@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:converters="clr-namespace:WeeklyTimetable.Converters"
+             x:Class="WeeklyTimetable.Views.BlockDetailSheet"
+             BackgroundColor="{StaticResource BgPage}"
+             Title="Block Details">
+
+    <ContentPage.Resources>
+        <converters:Time24To12HrConverter x:Key="Time24To12Hr" />
+        <converters:DurationToStringConverter x:Key="DurationToString" />
+    </ContentPage.Resources>
+
+    <ScrollView>
+        <VerticalStackLayout Spacing="16" Padding="24">
+            <!-- Header -->
+            <Label Text="{Binding Block.Icon}" FontSize="48" HorizontalOptions="Center" />
+            <Label Text="{Binding Block.Label}" Style="{StaticResource H2}" HorizontalOptions="Center" />
+            <HorizontalStackLayout HorizontalOptions="Center" Spacing="12">
+                <Label Text="{Binding Block.Time, Converter={StaticResource Time24To12Hr}}" TextColor="{StaticResource AccentPurple}" FontAttributes="Bold" />
+                <Label Text="·" TextColor="{StaticResource TextMuted}" />
+                <Label Text="{Binding Block.DurationMinutes, Converter={StaticResource DurationToString}}" TextColor="{StaticResource TextMuted}" />
+                <Label Text="·" TextColor="{StaticResource TextMuted}" />
+                <Label Text="{Binding Block.Category}" Style="{StaticResource MonoLabel}" />
+            </HorizontalStackLayout>
+
+            <!-- Notes -->
+            <Border Style="{StaticResource CardStyle}">
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="📝  Study Notes" FontAttributes="Bold" />
+                    <Editor Placeholder="Add notes, key takeaways, or next steps..."
+                            PlaceholderColor="{StaticResource TextMuted}"
+                            Text="{Binding Notes}" TextColor="{StaticResource TextBody}"
+                            BackgroundColor="Transparent" HeightRequest="140" AutoSize="TextChanges" />
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Save -->
+            <Button Text="Save Notes" Command="{Binding SaveNotesCommand}"
+                    BackgroundColor="{StaticResource AccentPurple}" TextColor="{StaticResource BgPage}"
+                    FontAttributes="Bold" CornerRadius="12" HeightRequest="48" />
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

@@ -1,0 +1,249 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:local="clr-namespace:WeeklyTimetable.Views"
+             xmlns:vm="clr-namespace:WeeklyTimetable.ViewModels"
+             xmlns:converters="clr-namespace:WeeklyTimetable.Converters"
+             xmlns:controls="clr-namespace:WeeklyTimetable.Controls"
+             x:Class="WeeklyTimetable.Views.MainPage"
+             BackgroundColor="{StaticResource BgPage}">
+
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <converters:BoolToOpacityConverter x:Key="BoolToOpacityConverter" />
+            <converters:Time24To12HrConverter  x:Key="Time24To12Hr" />
+            
+            <!-- Define the F/T Converters safely here -->
+            <converters:BoolToColorConverter   x:Key="FocusBgConverter"      TrueColor="#818cf8" FalseColor="Transparent" />
+            <converters:BoolToColorConverter   x:Key="FocusTextConverter"    TrueColor="#f1f5f9" FalseColor="#818cf8" />
+            <converters:BoolToColorConverter   x:Key="TimelineBgConverter"   TrueColor="Transparent" FalseColor="#818cf8" />
+            <converters:BoolToColorConverter   x:Key="TimelineTextConverter" TrueColor="#818cf8" FalseColor="#f1f5f9" />
+        </ResourceDictionary>
+    </ContentPage.Resources>
+
+    <!-- Base Grid layout for the entire page -->
+    <Grid RowDefinitions="Auto, *">
+        
+        <!-- HEADER ROW: Title + 7 Mini Progress Bars -->
+        <Border Grid.Row="0" BackgroundColor="{StaticResource BgHeader}" Margin="0,0,0,0" Padding="16, 20">
+            <VerticalStackLayout Spacing="16">
+                <!-- Titles -->
+                <HorizontalStackLayout Spacing="8" VerticalOptions="Center">
+                    <Label Style="{StaticResource H1}" Text="Weekly Blueprint" />
+                    <!-- Visual flame badge using StreakBadgeControl -->
+                    <controls:StreakBadgeControl StreakCount="{Binding CurrentStreak}" Margin="10,0,0,0" />
+                </HorizontalStackLayout>
+                
+                <!-- 7 Mini Progress Bars Header (Bind to WeekStats) -->
+                <CollectionView ItemsSource="{Binding WeekStats}" HeightRequest="40">
+                    <CollectionView.ItemsLayout>
+                        <LinearItemsLayout Orientation="Horizontal" ItemSpacing="8" />
+                    </CollectionView.ItemsLayout>
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate>
+                            <VerticalStackLayout Spacing="4" Opacity="0.8">
+                                <VerticalStackLayout.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type vm:MainViewModel}}, Path=SwitchDayCommand}" CommandParameter="{Binding DayName}" />
+                                </VerticalStackLayout.GestureRecognizers>
+
+                                <Label Text="{Binding DayAbbreviation}" FontSize="10" HorizontalOptions="Center">
+                                    <Label.Triggers>
+                                        <DataTrigger TargetType="Label" Binding="{Binding IsActive}" Value="True">
+                                            <Setter Property="TextColor" Value="{StaticResource TextHeading}" />
+                                        </DataTrigger>
+                                        <DataTrigger TargetType="Label" Binding="{Binding IsActive}" Value="False">
+                                            <Setter Property="TextColor" Value="{StaticResource TextMuted}" />
+                                        </DataTrigger>
+                                    </Label.Triggers>
+                                </Label>
+                                
+                                <!-- Progress Bar Wrapper -->
+                                <Border BackgroundColor="{StaticResource BorderVisible}" Stroke="Transparent" StrokeShape="RoundRectangle 4" HeightRequest="6" WidthRequest="35">
+                                    <BoxView Color="{StaticResource AccentPurple}" WidthRequest="{Binding CompletionPct, Converter={converters:PercentToWidthConverter}}" HorizontalOptions="Start" />
+                                </Border>
+                            </VerticalStackLayout>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+            </VerticalStackLayout>
+        </Border>
+
+        <!-- CONTENT AREA -->
+        <ScrollView Grid.Row="1" Padding="16" VerticalScrollBarVisibility="Never">
+            <VerticalStackLayout Spacing="24">
+                
+                <!-- Day Header (Ring + Text + Focus Mode toggle) -->
+                <Grid ColumnDefinitions="Auto, *, Auto, Auto" Padding="0,8">
+                    <!-- Progress Ring -->
+                    <controls:RingProgressControl Grid.Column="0" 
+                                                  Size="52" 
+                                                  Pct="{Binding ActiveDayStats.CompletionPct}" 
+                                                  Stroke="5" 
+                                                  RingColor="{StaticResource AccentPurple}" />
+                    
+                    <!-- Day Titles -->
+                    <VerticalStackLayout Grid.Column="1" VerticalOptions="Center" Margin="16,0,0,0">
+                        <Label Text="{Binding ActiveDay}" Style="{StaticResource H2}" />
+                        <Label Text="{Binding ActiveDayStats.CompletedBlocks, StringFormat='{0} steps done'}" TextColor="{StaticResource TextMuted}" />
+                    </VerticalStackLayout>
+
+                    <!-- Focus Mode Toggle Button -->
+                    <HorizontalStackLayout Grid.Column="2" VerticalOptions="Center" Spacing="8" Margin="8,0,16,0">
+                        <Label Text="Timeline" VerticalOptions="Center" FontSize="13" FontAttributes="Bold">
+                            <Label.Triggers>
+                                <DataTrigger TargetType="Label" Binding="{Binding IsFocusMode}" Value="False">
+                                    <Setter Property="TextColor" Value="{StaticResource AccentPurple}" />
+                                </DataTrigger>
+                                <DataTrigger TargetType="Label" Binding="{Binding IsFocusMode}" Value="True">
+                                    <Setter Property="TextColor" Value="{StaticResource TextMuted}" />
+                                </DataTrigger>
+                            </Label.Triggers>
+                        </Label>
+                        
+                        <Switch IsToggled="{Binding IsFocusMode}" OnColor="{StaticResource AccentPurple}" />
+                        
+                        <Label Text="Focus" VerticalOptions="Center" FontSize="13" FontAttributes="Bold">
+                            <Label.Triggers>
+                                <DataTrigger TargetType="Label" Binding="{Binding IsFocusMode}" Value="True">
+                                    <Setter Property="TextColor" Value="{StaticResource AccentPurple}" />
+                                </DataTrigger>
+                                <DataTrigger TargetType="Label" Binding="{Binding IsFocusMode}" Value="False">
+                                    <Setter Property="TextColor" Value="{StaticResource TextMuted}" />
+                                </DataTrigger>
+                            </Label.Triggers>
+                        </Label>
+                    </HorizontalStackLayout>
+
+                    <!-- Reset Button -->
+                    <Button Grid.Column="3" 
+                            Text="↺ Reset" 
+                            Command="{Binding ResetDayCommand}" 
+                            IsVisible="{Binding HasAnyCompleted}"
+                            BackgroundColor="Transparent"
+                            TextColor="{StaticResource TextMuted}"
+                            BorderColor="{StaticResource BorderVisible}"
+                            BorderWidth="1"
+                            CornerRadius="8"
+                            HeightRequest="36"
+                            VerticalOptions="Center" />
+                </Grid>
+
+                <!-- Focus Mode Banner -->
+                <Border IsVisible="{Binding IsFocusMode}"
+                        BackgroundColor="#1e1b4b" Stroke="{StaticResource AccentPurple}"
+                        StrokeThickness="1" StrokeShape="RoundRectangle 8" Padding="12">
+                    <Label Text="👁️  Focus Mode — showing current + next 2 blocks"
+                           TextColor="{StaticResource AccentPurple}" FontSize="12" />
+                </Border>
+
+                <!-- Celebration Banner -->
+                <Border IsVisible="{Binding IsDayCelebrated}" BackgroundColor="#064e3b" Stroke="{StaticResource SuccessGreen}" StrokeThickness="1" StrokeShape="RoundRectangle 8" Padding="16">
+                    <HorizontalStackLayout Spacing="16" VerticalOptions="Center">
+                        <Label Text="🏆" FontSize="24" />
+                        <VerticalStackLayout VerticalOptions="Center">
+                            <Label Text="Day Completed!" FontAttributes="Bold" TextColor="#34d399" FontSize="16" />
+                            <Label Text="You've crushed every block today. Great consistency." TextColor="#a7f3d0" FontSize="12" />
+                        </VerticalStackLayout>
+                    </HorizontalStackLayout>
+                </Border>
+
+                <!-- Weekly Goals Snapshot -->
+                <Border IsVisible="{Binding HasWeeklyGoals}" Style="{StaticResource CardStyle}">
+                    <VerticalStackLayout Spacing="12">
+                        <Grid ColumnDefinitions="*, Auto">
+                            <Label Grid.Column="0" Text="🎯 Weekly Goals" TextColor="{StaticResource TextHeading}" FontAttributes="Bold" FontSize="16" />
+                            <Label Grid.Column="1" Text="{Binding GoalsProgressText}" TextColor="{StaticResource TextMuted}" FontSize="12" VerticalOptions="Center" />
+                        </Grid>
+
+                        <Label Text="{Binding GoalCountdownText}" TextColor="#facc15" FontSize="12" />
+
+                        <VerticalStackLayout Spacing="8" BindableLayout.ItemsSource="{Binding WeeklyGoalItems}">
+                            <BindableLayout.ItemTemplate>
+                                <DataTemplate x:DataType="vm:GoalTrackerItem">
+                                    <Grid ColumnDefinitions="Auto, *" ColumnSpacing="8">
+                                        <Label Grid.Column="0" Text="{Binding StatusText}" TextColor="{Binding StatusColor}" FontSize="14" VerticalOptions="Center" />
+                                        <HorizontalStackLayout Grid.Column="1" Spacing="6">
+                                            <Label Text="{Binding Title}" FontAttributes="Bold" FontSize="12" />
+                                            <Label Text="{Binding GoalText}" TextColor="{StaticResource TextMuted}" FontSize="12" LineBreakMode="TailTruncation" />
+                                        </HorizontalStackLayout>
+                                    </Grid>
+                                </DataTemplate>
+                            </BindableLayout.ItemTemplate>
+                        </VerticalStackLayout>
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- Category Filters Horizontal List -->
+                <ScrollView Orientation="Horizontal" HorizontalScrollBarVisibility="Never">
+                    <HorizontalStackLayout Spacing="8" BindableLayout.ItemsSource="{Binding ActiveCategories}">
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate>
+                                <Border Style="{StaticResource PillStyle}">
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type vm:MainViewModel}}, Path=SetFilterCommand}" CommandParameter="{Binding Key}" />
+                                    </Border.GestureRecognizers>
+                                    <Label Text="{Binding DisplayText}" Style="{StaticResource MonoLabel}" />
+                                </Border>
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </HorizontalStackLayout>
+                </ScrollView>
+
+                <!-- Schedule Blocks -->
+                <CollectionView x:Name="BlocksCollection" ItemsSource="{Binding FilteredBlocks}">
+                    <CollectionView.ItemTemplate>
+                        <DataTemplate>
+                            <Grid ColumnDefinitions="58, 20, *" Margin="0, 0, 0, 12"
+                                  Opacity="{Binding IsCompleted, Converter={StaticResource BoolToOpacityConverter}}">
+                                
+                                <!-- Time column — 12-hr format (spec §7.2) -->
+                                <VerticalStackLayout Grid.Column="0" VerticalOptions="Center" Margin="0,0,8,0">
+                                    <Label Text="{Binding Time, Converter={StaticResource Time24To12Hr}}"
+                                           FontAttributes="Bold" FontSize="13" HorizontalOptions="End" />
+                                </VerticalStackLayout>
+
+                                <!-- Dot Connector -->
+                                <Grid Grid.Column="1" RowDefinitions="Auto, *" HorizontalOptions="Center">
+                                    <Border Grid.Row="0" WidthRequest="12" HeightRequest="12" StrokeShape="RoundRectangle 6" BackgroundColor="Transparent" Stroke="{StaticResource AccentPurple}" StrokeThickness="2" />
+                                    <BoxView Grid.Row="1" WidthRequest="2" Color="{StaticResource BorderLight}" HorizontalOptions="Center" Margin="0,4,0,0" />
+                                </Grid>
+
+                                <!-- Card — tap to complete, long-press to edit (spec §8.14) -->
+                                <Border Grid.Column="2" Style="{StaticResource CardStyle}">
+                                    <Border.GestureRecognizers>
+                                        <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type vm:MainViewModel}}, Path=ToggleStepCommand}" CommandParameter="{Binding .}" />
+                                        <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type vm:MainViewModel}}, Path=OpenBlockDetailCommand}" CommandParameter="{Binding .}" NumberOfTapsRequired="2" />
+                                    </Border.GestureRecognizers>
+                                    <Grid ColumnDefinitions="Auto, *, Auto" RowDefinitions="Auto, Auto">
+                                        <!-- Icon -->
+                                        <Label Grid.Row="0" Grid.Column="0" Grid.RowSpan="2" Text="{Binding Icon}" FontSize="24" VerticalOptions="Center" Margin="0,0,12,0" />
+                                        
+                                        <!-- Title & Category -->
+                                        <Label Grid.Row="0" Grid.Column="1" Text="{Binding Label}" FontAttributes="Bold" TextDecorations="{Binding IsCompleted, Converter={converters:BoolToStrikethroughConverter}}" FontSize="15" />
+                                        <Label Grid.Row="1" Grid.Column="1" Text="{Binding Category}" Style="{StaticResource MonoLabel}" Margin="0,2,0,0" />
+
+                                        <!-- Checkbox marker -->
+                                        <Label Grid.Row="0" Grid.Column="2" Grid.RowSpan="2" Text="✓" IsVisible="{Binding IsCompleted}" TextColor="{StaticResource SuccessGreen}" FontSize="20" VerticalOptions="Center" />
+                                    </Grid>
+                                </Border>
+                            </Grid>
+                        </DataTemplate>
+                    </CollectionView.ItemTemplate>
+                </CollectionView>
+
+                <!-- Add New Block button (spec §8.14) -->
+                <Button Text="+ Add Block"
+                        Command="{Binding AddBlockCommand}"
+                        BackgroundColor="Transparent"
+                        TextColor="{StaticResource AccentPurple}"
+                        BorderColor="{StaticResource BorderVisible}"
+                        BorderWidth="1"
+                        CornerRadius="10"
+                        HeightRequest="44"
+                        Margin="0,0,0,32" />
+
+            </VerticalStackLayout>
+        </ScrollView>
+    </Grid>
+
+</ContentPage>

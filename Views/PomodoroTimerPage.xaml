@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:WeeklyTimetable.ViewModels"
+             xmlns:controls="clr-namespace:WeeklyTimetable.Controls"
+             xmlns:converters="clr-namespace:WeeklyTimetable.Converters"
+             x:Class="WeeklyTimetable.Views.PomodoroTimerPage"
+             BackgroundColor="{StaticResource BgPage}"
+             Title="Focus Timer">
+
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <converters:SecondsToTimeConverter x:Key="SecondsToTimeConverter" />
+            <converters:BoolToStringConverter x:Key="StartLabelConverter" TrueString="Pause" FalseString="Start Focus" />
+        </ResourceDictionary>
+    </ContentPage.Resources>
+
+    <Grid>
+        <ScrollView>
+        <VerticalStackLayout Padding="24, 40" Spacing="32" VerticalOptions="Center" HorizontalOptions="Center">
+        
+        <!-- Header -->
+        <VerticalStackLayout HorizontalOptions="Center" Spacing="24">
+            <VerticalStackLayout Spacing="8" HorizontalOptions="Center">
+                <Label Text="{Binding TimerStateLabel}" Style="{StaticResource H1}" HorizontalOptions="Center" />
+                <Label Text="{Binding CycleCount, StringFormat='Completed Cycles: {0}'}" Style="{StaticResource MonoLabel}" HorizontalOptions="Center" />
+            </VerticalStackLayout>
+            
+            <!-- Mode Selection Buttons -->
+            <HorizontalStackLayout Spacing="12" HorizontalOptions="Center">
+                <Button Text="Deep Focus"
+                        Command="{Binding SetFocusModeCommand}"
+                        BackgroundColor="{StaticResource AccentPurple}"
+                        TextColor="{StaticResource BgPage}"
+                        CornerRadius="20"
+                        HeightRequest="40"
+                        Padding="16,0" />
+                <Button Text="Break"
+                        Command="{Binding SetBreakModeCommand}"
+                        BackgroundColor="Transparent"
+                        TextColor="{StaticResource TextHeading}"
+                        BorderColor="{StaticResource BorderVisible}"
+                        BorderWidth="1"
+                        CornerRadius="20"
+                        HeightRequest="40"
+                        Padding="16,0" />
+                <Button Text="Custom"
+                        Command="{Binding ShowCustomTimerCommand}"
+                        BackgroundColor="Transparent"
+                        TextColor="{StaticResource TextHeading}"
+                        BorderColor="{StaticResource BorderVisible}"
+                        BorderWidth="1"
+                        CornerRadius="20"
+                        HeightRequest="40"
+                        Padding="16,0" />
+            </HorizontalStackLayout>
+        </VerticalStackLayout>
+
+        <!-- Timer Ring -->
+        <Grid HorizontalOptions="Center" VerticalOptions="Center">
+            
+            <controls:RingProgressControl Size="280" 
+                                          Stroke="12" 
+                                          Pct="{Binding ProgressPct}" 
+                                          RingColor="{StaticResource AccentPurple}" />
+                                          
+            <!-- Time Display inside Ring -->
+            <Label Text="{Binding SecondsRemaining, Converter={StaticResource SecondsToTimeConverter}}" 
+                   FontSize="64" 
+                   FontAttributes="Bold" 
+                   TextColor="{StaticResource TextHeading}"
+                   HorizontalOptions="Center" 
+                   VerticalOptions="Center" />
+        </Grid>
+
+        <!-- Controls -->
+        <HorizontalStackLayout HorizontalOptions="Center" Spacing="24">
+            
+            <Button Text="Reset" 
+                    Command="{Binding ResetTimerCommand}"
+                    BackgroundColor="Transparent"
+                    TextColor="{StaticResource TextMuted}"
+                    BorderColor="{StaticResource BorderVisible}"
+                    BorderWidth="1"
+                    CornerRadius="24"
+                    WidthRequest="80"
+                    HeightRequest="48" />
+                    
+            <Button Text="{Binding IsRunning, Converter={StaticResource StartLabelConverter}}" 
+                    Command="{Binding StartPauseTimerCommand}"
+                    BackgroundColor="{StaticResource AccentPurple}"
+                    TextColor="{StaticResource BgPage}"
+                    FontAttributes="Bold"
+                    CornerRadius="24"
+                    WidthRequest="140"
+                    HeightRequest="48" />
+                    
+            <Button Text="Skip" 
+                    Command="{Binding SkipTimerCommand}"
+                    BackgroundColor="Transparent"
+                    TextColor="{StaticResource TextMuted}"
+                    BorderColor="{StaticResource BorderVisible}"
+                    BorderWidth="1"
+                    CornerRadius="24"
+                    WidthRequest="80"
+                    HeightRequest="48" />
+
+        </HorizontalStackLayout>
+        </VerticalStackLayout>
+    </ScrollView>
+
+    <!-- Custom Timer Modal -->
+    <Grid IsVisible="{Binding IsCustomTimerVisible}" BackgroundColor="#CC000000">
+        <Grid.GestureRecognizers>
+            <TapGestureRecognizer Command="{Binding CloseCustomTimerCommand}" />
+        </Grid.GestureRecognizers>
+        
+        <Border Style="{StaticResource CardStyle}" Padding="20" HorizontalOptions="Center" VerticalOptions="Center" WidthRequest="320">
+            <Border.GestureRecognizers>
+                <!-- Empty recognizer to prevent taps on the modal card from closing the modal -->
+                <TapGestureRecognizer />
+            </Border.GestureRecognizers>
+            <VerticalStackLayout Spacing="16">
+                <Label Text="Custom Timer Settings" FontAttributes="Bold" FontSize="16" TextColor="{StaticResource TextHeading}" HorizontalOptions="Center" />
+
+                <VerticalStackLayout Spacing="4">
+                    <HorizontalStackLayout Spacing="8">
+                        <Label Text="Minutes" />
+                        <Label Text="{Binding CustomMinutes, StringFormat='{0:0} min'}" TextColor="{StaticResource TextMuted}" />
+                    </HorizontalStackLayout>
+                    <Stepper Minimum="0" Maximum="59" Increment="1" Value="{Binding CustomMinutes}" HorizontalOptions="Center" />
+                </VerticalStackLayout>
+
+                <VerticalStackLayout Spacing="4">
+                    <HorizontalStackLayout Spacing="8">
+                        <Label Text="Seconds" />
+                        <Label Text="{Binding CustomSeconds, StringFormat='{0:0} sec'}" TextColor="{StaticResource TextMuted}" />
+                    </HorizontalStackLayout>
+                    <Stepper Minimum="0" Maximum="59" Increment="1" Value="{Binding CustomSeconds}" HorizontalOptions="Center" />
+                </VerticalStackLayout>
+
+                <HorizontalStackLayout Spacing="16" HorizontalOptions="Center" Margin="0,8,0,0">
+                    <Button Text="Cancel"
+                            Command="{Binding CloseCustomTimerCommand}"
+                            BackgroundColor="Transparent"
+                            TextColor="{StaticResource TextMuted}"
+                            BorderColor="{StaticResource BorderVisible}"
+                            BorderWidth="1"
+                            CornerRadius="10"
+                            HeightRequest="40"
+                            WidthRequest="100" />
+                    <Button Text="Apply"
+                            Command="{Binding ApplyCustomTimerCommand}"
+                            BackgroundColor="{StaticResource AccentPurple}"
+                            TextColor="{StaticResource BgPage}"
+                            FontAttributes="Bold"
+                            CornerRadius="10"
+                            HeightRequest="40"
+                            WidthRequest="100" />
+                </HorizontalStackLayout>
+            </VerticalStackLayout>
+        </Border>
+    </Grid>
+</Grid>
+
+</ContentPage>
