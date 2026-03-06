@@ -1,4 +1,6 @@
 using System.Collections.ObjectModel;
+using CommunityToolkit.Maui.Alerts;
+using CommunityToolkit.Maui.Core;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using WeeklyTimetable.Models;
@@ -94,6 +96,9 @@ public partial class EditBlockViewModel : ObservableObject
 
         bool isNew = _existingBlock == null;
         OnSaved?.Invoke(block, isNew);
+        
+        await Toast.Make("Block saved successfully!", ToastDuration.Short).Show();
+        
         await Shell.Current.GoToAsync("..");
     }
 

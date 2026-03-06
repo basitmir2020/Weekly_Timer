@@ -11,6 +11,7 @@ namespace WeeklyTimetable.ViewModels;
 
 public partial class MainViewModel : ObservableObject
 {
+    private const string STATE_KEY_V3 = "sched_v3";
     private const string STATE_KEY = "sched_v2";
     private static readonly string[] OrderedDays = { "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday" };
 
@@ -65,26 +66,38 @@ public partial class MainViewModel : ObservableObject
     {
         try
         {
-            // 1. Load the mock template structure
-            _fullSchedule = ScheduleData.GetDefaultSchedule();
-
-            // 2. Load completions from Persistence
-            var state = await _persistenceService.LoadStateAsync<Dictionary<string, bool>>(STATE_KEY);
-            if (state != null)
+            // 1. Load full custom schedule if exists
+            var customSchedule = await _persistenceService.LoadStateAsync<Dictionary<string, List<ScheduleBlock>>>(STATE_KEY_V3);
+            if (customSchedule != null && customSchedule.Count > 0)
             {
-                _completedState = state;
-                
-                // Map state onto blocks
-                foreach (var kvp in _fullSchedule)
+                _fullSchedule = customSchedule;
+            }
+            else
+            {
+                // Fallback to defaults
+                _fullSchedule = ScheduleData.GetDefaultSchedule();
+
+                // 2. Load legacy completions from Persistence
+                var state = await _persistenceService.LoadStateAsync<Dictionary<string, bool>>(STATE_KEY);
+                if (state != null)
                 {
-                    var dayName = kvp.Key;
-                    var blocks = kvp.Value;
-                    for (int i = 0; i < blocks.Count; i++)
+                    _completedState = state;
+                    
+                    // Map state onto blocks
+                    foreach (var kvp in _fullSchedule)
                     {
-                        string stateKey = $"{dayName}__{i}";
-                        blocks[i].IsCompleted = _completedState.ContainsKey(stateKey) && _completedState[stateKey];
+                        var dayName = kvp.Key;
+                        var blocks = kvp.Value;
+                        for (int i = 0; i < blocks.Count; i++)
+                        {
+                            string stateKey = $"{dayName}__{i}";
+                            blocks[i].IsCompleted = _completedState.ContainsKey(stateKey) && _completedState[stateKey];
+                        }
                     }
                 }
+                
+                // Save immediately to new v3 format
+                await _persistenceService.SaveStateAsync(STATE_KEY_V3, _fullSchedule);
             }
 
             EnsureActiveDayIsValid();
@@ -141,24 +154,47 @@ public partial class MainViewModel : ObservableObject
         await _notificationService.CancelAllNotificationsAsync();
         bool hasPermission = await _notificationService.RequestPermissionsAsync();
 
-        if (hasPermission && _fullSchedule.TryGetValue(ActiveDay, out var blocks))
+        if (hasPermission)
         {
             DateTime now = DateTime.Now;
             int notificationId = 1000;
-
-            foreach (var block in blocks)
+            
+            var today = DateTime.Today;
+            for (int dayOffset = 0; dayOffset < 7; dayOffset++)
             {
-                if (block.IsCompleted) continue;
-                if (!TimeSpan.TryParse(block.Time, out TimeSpan blockTime)) continue;
-
-                var blockDateTime = DateTime.Today.Add(blockTime);
-                if (blockDateTime < now) continue;
-
-                var notifyTime = blockDateTime.AddMinutes(-5);
-                if (notifyTime > now)
+                var targetDate = today.AddDays(dayOffset);
+                string targetDayName = targetDate.DayOfWeek.ToString();
+                
+                if (_fullSchedule.TryGetValue(targetDayName, out var blocks))
                 {
-                    string msg = $"{block.Icon} {block.Label} starts in 5 minutes.";
-                    _notificationService.ScheduleNotificationAsync("Upcoming Activity", msg, notifyTime, notificationId++);
+                    foreach (var block in blocks)
+                    {
+                        if (dayOffset == 0 && block.IsCompleted) continue;
+                        if (!TimeSpan.TryParse(block.Time, out TimeSpan blockTime)) continue;
+
+                        var blockStartDateTime = targetDate.Add(blockTime);
+                        var blockEndDateTime = blockStartDateTime.AddMinutes(block.DurationMinutes);
+
+                        // Start alert 5 mins before
+                        var startNotifyTime = blockStartDateTime.AddMinutes(-5);
+                        if (startNotifyTime > now && startNotifyTime < now.AddDays(7))
+                        {
+                            _notificationService.ScheduleNotificationAsync(
+                                "Upcoming Activity", 
+                                $"{block.Icon} {block.Label} starts in 5 minutes.", 
+                                startNotifyTime, notificationId++);
+                        }
+
+                        // End alert 5 mins before
+                        var endNotifyTime = blockEndDateTime.AddMinutes(-5);
+                        if (endNotifyTime > now && endNotifyTime < now.AddDays(7))
+                        {
+                            _notificationService.ScheduleNotificationAsync(
+                                "Wrap Up", 
+                                $"{block.Icon} {block.Label} ends in 5 minutes. Wrap up!", 
+                                endNotifyTime, notificationId++);
+                        }
+                    }
                 }
             }
         }
@@ -294,7 +330,7 @@ public partial class MainViewModel : ObservableObject
                 ApplyFilter();
                 UpdateDayStats();
                 UpdateWeekStats();
-                _ = _persistenceService.SaveStateAsync(STATE_KEY, _completedState);
+                _ = _persistenceService.SaveStateAsync(STATE_KEY_V3, _fullSchedule);
                 _ = SyncTodayStreakAsync();
             }
         };
@@ -356,22 +392,31 @@ public partial class MainViewModel : ObservableObject
     {
         if (!_fullSchedule.ContainsKey(ActiveDay)) return;
         
-        // Note: CommunityToolkit doesn't auto-notify nested object property changes 
-        // without ObservableProperty in the model, but since MAUI CheckBoxes two-way bind,
-        // it may visibly update immediately. We force an update otherwise.
-        block.IsCompleted = !block.IsCompleted;
+        if (block.IsCompleted)
+        {
+            await ShowShortToastAsync("Cannot uncheck a completed block.");
+            return;
+        }
+
+        // Strict validation: cannot complete if block is missed
+        if (IsActiveDayToday() && TimeSpan.TryParse(block.Time, out TimeSpan blockTime))
+        {
+            var blockEndTime = blockTime.Add(TimeSpan.FromMinutes(block.DurationMinutes));
+            // If the end time crosses midnight, handle it properly for today
+            if (blockEndTime >= blockTime && DateTime.Now.TimeOfDay > blockEndTime)
+            {
+                await ShowShortToastAsync("Block missed, cannot complete.");
+                return;
+            }
+        }
+
+        block.IsCompleted = true;
         
         var list = _fullSchedule[ActiveDay];
         int index = list.IndexOf(block);
         if (index != -1)
         {
-            string stateKey = $"{ActiveDay}__{index}";
-            if (block.IsCompleted)
-                _completedState[stateKey] = true;
-            else
-                _completedState.Remove(stateKey);
-                
-            await _persistenceService.SaveStateAsync(STATE_KEY, _completedState);
+            await _persistenceService.SaveStateAsync(STATE_KEY_V3, _fullSchedule);
         }
 
         UpdateDayStats();
@@ -388,11 +433,9 @@ public partial class MainViewModel : ObservableObject
         for (int i = 0; i < list.Count; i++)
         {
             list[i].IsCompleted = false;
-            string stateKey = $"{ActiveDay}__{i}";
-            _completedState.Remove(stateKey);
         }
 
-        await _persistenceService.SaveStateAsync(STATE_KEY, _completedState);
+        await _persistenceService.SaveStateAsync(STATE_KEY_V3, _fullSchedule);
         
         // Refresh UI
         var currentFilter = ActiveFilter;
