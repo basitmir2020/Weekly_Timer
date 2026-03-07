@@ -22,21 +22,45 @@ public partial class HeatmapGridControl : ContentView
         set => SetValue(HeatmapCellsProperty, value);
     }
 
+    /// <summary>
+    /// Initializes the heatmap control.
+    /// </summary>
     public HeatmapGridControl()
     {
         InitializeComponent();
     }
 
+    /// <summary>
+    /// Rebinds collection change notifications and invalidates the canvas when heatmap data changes.
+    /// </summary>
+    /// <param name="bindable">Control instance receiving new data.</param>
+    /// <param name="oldValue">Previous heatmap collection.</param>
+    /// <param name="newValue">New heatmap collection.</param>
+    /// <returns>None.</returns>
+    /// <remarks>
+    /// Side effects: subscribes to collection change events and triggers redraw requests.
+    /// </remarks>
     private static void OnHeatmapDataChanged(BindableObject bindable, object oldValue, object newValue)
     {
         if (newValue is INotifyCollectionChanged collection)
         {
+            // Keep redraws in sync with incremental collection updates.
+            // Potential bug: this unsubscribe uses a new lambda instance and will not detach previous handlers.
             collection.CollectionChanged -= (s, e) => (bindable as HeatmapGridControl)?.canvasView.InvalidateSurface();
             collection.CollectionChanged += (s, e) => (bindable as HeatmapGridControl)?.canvasView.InvalidateSurface();
         }
         (bindable as HeatmapGridControl)?.canvasView.InvalidateSurface();
     }
 
+    /// <summary>
+    /// Draws a 12x7 contribution-style heatmap grid from bound cell data.
+    /// </summary>
+    /// <param name="sender">Canvas view source.</param>
+    /// <param name="e">Skia paint event args containing surface and dimensions.</param>
+    /// <returns>None.</returns>
+    /// <remarks>
+    /// Side effects: paints heatmap cells on the Skia canvas.
+    /// </remarks>
     private void OnPaintSurface(object? sender, SKPaintSurfaceEventArgs e)
     {
         var info = e.Info;
@@ -58,6 +82,7 @@ public partial class HeatmapGridControl : ContentView
         float cellSize = (info.Height - (rows * margin) - margin) / rows;
         if (cellSize > 24 * density) cellSize = 24 * density;
         
+        // Right-align the grid so it remains visually balanced on wider cards.
         float startX = info.Width - (columns * (cellSize + margin));
         if (startX < 0) startX = margin;
         
@@ -89,6 +114,7 @@ public partial class HeatmapGridControl : ContentView
                 }
                 else
                 {
+                    // Invalid color payloads are safely replaced with fallback to avoid render exceptions.
                     paint.Color = SKColor.Parse("#0d1117");
                 }
                 

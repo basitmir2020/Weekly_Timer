@@ -31,6 +31,14 @@ public partial class SettingsViewModel : ObservableObject
     public List<string> Themes { get; } = new() { "Dark", "Light", "System" };
     public List<string> FontSizes { get; } = new() { "Small", "Medium", "Large" };
 
+    /// <summary>
+    /// Creates the settings view model and hydrates persisted preferences and editable master schedule data.
+    /// </summary>
+    /// <param name="supabase">Cloud backup/restore service.</param>
+    /// <param name="persistence">Local persistence service for schedule template data.</param>
+    /// <remarks>
+    /// Side effects: reads from preferences and starts asynchronous schedule loading.
+    /// </remarks>
     public SettingsViewModel(ISupabaseSyncService supabase, IPersistenceService persistence)
     {
         _supabase = supabase;
@@ -43,6 +51,13 @@ public partial class SettingsViewModel : ObservableObject
         _ = LoadMasterScheduleAsync();
     }
 
+    /// <summary>
+    /// Loads the editable master weekly schedule from storage or falls back to bundled defaults.
+    /// </summary>
+    /// <returns>A task that completes after in-memory schedule data is prepared.</returns>
+    /// <remarks>
+    /// Side effects: updates internal schedule cache and refreshes day block editor collection.
+    /// </remarks>
     private async Task LoadMasterScheduleAsync()
     {
         var sched = await _persistence.LoadStateAsync<Dictionary<string, List<ScheduleBlock>>>("sched_v3");
@@ -57,11 +72,23 @@ public partial class SettingsViewModel : ObservableObject
         RefreshDayBlocks();
     }
 
+    /// <summary>
+    /// Reacts to day selection changes and reloads editable blocks for the selected day.
+    /// </summary>
+    /// <param name="value">Newly selected day name.</param>
+    /// <returns>None.</returns>
     partial void OnSelectedDayChanged(string value)
     {
         RefreshDayBlocks();
     }
 
+    /// <summary>
+    /// Rebuilds the day block editor collection from the currently selected schedule day.
+    /// </summary>
+    /// <returns>None.</returns>
+    /// <remarks>
+    /// Side effects: clears and repopulates <see cref="DayBlocks"/> and persists edits via per-item callbacks.
+    /// </remarks>
     private void RefreshDayBlocks()
     {
         DayBlocks.Clear();
@@ -69,6 +96,7 @@ public partial class SettingsViewModel : ObservableObject
         {
             foreach (var b in blocks)
             {
+                // Each editor item writes through to the shared schedule dictionary.
                 DayBlocks.Add(new TemplateBlockEditor(b, async () => 
                 {
                     await _persistence.SaveStateAsync("sched_v3", _masterSchedule);
@@ -77,6 +105,13 @@ public partial class SettingsViewModel : ObservableObject
         }
     }
 
+    /// <summary>
+    /// Signs in to Supabase and uploads locally stored schedule state as a cloud backup.
+    /// </summary>
+    /// <returns>A task that completes after backup flow status is updated.</returns>
+    /// <remarks>
+    /// Side effects: mutates <see cref="SupabaseStatusMessage"/> and performs network I/O via sync service.
+    /// </remarks>
     [RelayCommand]
     private async Task BackupAsync()
     {
@@ -89,6 +124,13 @@ public partial class SettingsViewModel : ObservableObject
         SupabaseStatusMessage = ok ? "Backup successful!" : "Backup failed.";
     }
 
+    /// <summary>
+    /// Signs in to Supabase and restores remote schedule state into local storage.
+    /// </summary>
+    /// <returns>A task that completes after restore flow status is updated.</returns>
+    /// <remarks>
+    /// Side effects: mutates <see cref="SupabaseStatusMessage"/> and writes restored data through sync service.
+    /// </remarks>
     [RelayCommand]
     private async Task RestoreAsync()
     {
@@ -101,10 +143,33 @@ public partial class SettingsViewModel : ObservableObject
         SupabaseStatusMessage = ok ? "Restore successful! Restart app." : "Restore failed.";
     }
 
+    /// <summary>
+    /// Persists notification-enabled setting when it changes.
+    /// </summary>
+    /// <param name="value">New notification toggle value.</param>
+    /// <returns>None.</returns>
     partial void OnNotificationsEnabledChanged(bool value) => Preferences.Set("notif_enabled", value);
+    /// <summary>
+    /// Persists haptic-enabled setting when it changes.
+    /// </summary>
+    /// <param name="value">New haptic toggle value.</param>
+    /// <returns>None.</returns>
     partial void OnHapticEnabledChanged(bool value)        => Preferences.Set("haptic_enabled", value);
+    /// <summary>
+    /// Persists font size selection when it changes.
+    /// </summary>
+    /// <param name="value">New font size token.</param>
+    /// <returns>None.</returns>
     partial void OnSelectedFontSizeChanged(string value)   => Preferences.Set("font_size", value);
 
+    /// <summary>
+    /// Persists selected theme and applies the corresponding runtime app theme.
+    /// </summary>
+    /// <param name="value">Theme token (Light, Dark, or System).</param>
+    /// <returns>None.</returns>
+    /// <remarks>
+    /// Side effects: writes preferences and mutates <see cref="Application.UserAppTheme"/>.
+    /// </remarks>
     partial void OnSelectedThemeChanged(string value)
     {
         Preferences.Set("theme", value);
@@ -119,6 +184,13 @@ public partial class SettingsViewModel : ObservableObject
         }
     }
 
+    /// <summary>
+    /// Confirms and clears all preference-based application data.
+    /// </summary>
+    /// <returns>A task that completes once the confirmation flow and clear operation finish.</returns>
+    /// <remarks>
+    /// Side effects: may clear all preference keys for the application.
+    /// </remarks>
     [RelayCommand]
     private async Task ResetAllDataAsync()
     {
@@ -144,6 +216,14 @@ public partial class TemplateBlockEditor : ObservableObject
     [ObservableProperty]
     private TimeSpan _timeValue;
 
+    /// <summary>
+    /// Creates an editor wrapper for a single schedule block within the settings master schedule editor.
+    /// </summary>
+    /// <param name="block">Underlying schedule block being edited.</param>
+    /// <param name="onChanged">Callback invoked whenever edited values should be persisted.</param>
+    /// <remarks>
+    /// Side effects: initializes editor state from block time and retains callback to trigger persistence.
+    /// </remarks>
     public TemplateBlockEditor(ScheduleBlock block, Action onChanged)
     {
         _block = block;
@@ -152,6 +232,14 @@ public partial class TemplateBlockEditor : ObservableObject
             _timeValue = ts;
     }
 
+    /// <summary>
+    /// Writes the edited time back into the schedule block and broadcasts a schedule-changed message.
+    /// </summary>
+    /// <param name="value">New time selected in the editor.</param>
+    /// <returns>None.</returns>
+    /// <remarks>
+    /// Side effects: mutates block time, invokes persistence callback, and sends a global refresh message.
+    /// </remarks>
     partial void OnTimeValueChanged(TimeSpan value)
     {
         _block.Time = value.ToString(@"hh\:mm");

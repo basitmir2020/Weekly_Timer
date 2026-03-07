@@ -11,6 +11,13 @@ namespace WeeklyTimetable;
 
 public static class MauiProgram
 {
+    /// <summary>
+    /// Builds and configures the MAUI application host, including DI registrations and UI toolkit setup.
+    /// </summary>
+    /// <returns>Configured <see cref="MauiApp"/> instance.</returns>
+    /// <remarks>
+    /// Side effects: registers fonts, services, view models, pages, and platform integrations in the host container.
+    /// </remarks>
     public static MauiApp CreateMauiApp()
     {
         var builder = MauiApp.CreateBuilder();

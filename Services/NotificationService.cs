@@ -4,6 +4,13 @@ namespace WeeklyTimetable.Services;
 
 public class NotificationService : INotificationService
 {
+    /// <summary>
+    /// Checks and requests local-notification permissions from the OS.
+    /// </summary>
+    /// <returns><c>true</c> when notifications are enabled or assumed available after fallback.</returns>
+    /// <remarks>
+    /// Side effects: may display an OS permission prompt.
+    /// </remarks>
     public async Task<bool> RequestPermissionsAsync()
     {
         try
@@ -22,6 +29,17 @@ public class NotificationService : INotificationService
         }
     }
 
+    /// <summary>
+    /// Builds and schedules a local notification for a specific time.
+    /// </summary>
+    /// <param name="title">Notification title text.</param>
+    /// <param name="message">Notification body text.</param>
+    /// <param name="scheduleTime">Local device date/time to notify.</param>
+    /// <param name="notificationId">Unique notification identifier.</param>
+    /// <returns>A completed task after request submission.</returns>
+    /// <remarks>
+    /// Side effects: registers a scheduled notification with platform notification center.
+    /// </remarks>
     public Task ScheduleNotificationAsync(string title, string message, DateTime scheduleTime, int notificationId)
     {
         var request = new NotificationRequest
@@ -45,12 +63,27 @@ public class NotificationService : INotificationService
         return Task.CompletedTask;
     }
 
+    /// <summary>
+    /// Cancels one scheduled notification by id.
+    /// </summary>
+    /// <param name="notificationId">Notification identifier to cancel.</param>
+    /// <returns>A completed task.</returns>
+    /// <remarks>
+    /// Side effects: removes scheduled notification from platform queue.
+    /// </remarks>
     public Task CancelScheduledNotificationAsync(int notificationId)
     {
         LocalNotificationCenter.Current.Cancel(notificationId);
         return Task.CompletedTask;
     }
 
+    /// <summary>
+    /// Cancels every scheduled notification for the app.
+    /// </summary>
+    /// <returns>A completed task.</returns>
+    /// <remarks>
+    /// Side effects: clears platform notification queue for this application.
+    /// </remarks>
     public Task CancelAllNotificationsAsync()
     {
         LocalNotificationCenter.Current.CancelAll();

@@ -5,7 +5,11 @@ namespace WeeklyTimetable;
 
 public class Program
 {
-	// This is the main entry point of the application.
+	/// <summary>
+	/// Application entry point for iOS; boots UIKit with the configured app delegate.
+	/// </summary>
+	/// <param name="args">Process command-line arguments.</param>
+	/// <returns>None.</returns>
 	static void Main(string[] args)
 	{
 		// if you want to use a different Application Delegate class from "AppDelegate"

@@ -8,9 +8,29 @@ namespace WeeklyTimetable.Services;
 
 public interface ISupabaseSyncService
 {
+    /// <summary>
+    /// Initializes Supabase client connection.
+    /// </summary>
+    /// <param name="url">Supabase project URL.</param>
+    /// <param name="key">Supabase API key.</param>
+    /// <returns>A task that completes after client initialization.</returns>
     Task InitializeAsync(string url, string key);
+    /// <summary>
+    /// Signs in with email/password credentials.
+    /// </summary>
+    /// <param name="email">User email.</param>
+    /// <param name="password">User password.</param>
+    /// <returns><c>true</c> on successful authentication; otherwise <c>false</c>.</returns>
     Task<bool> SignInAsync(string email, string password);
+    /// <summary>
+    /// Uploads local schedule backup payload to Supabase.
+    /// </summary>
+    /// <returns><c>true</c> when backup succeeds; otherwise <c>false</c>.</returns>
     Task<bool> BackupDataAsync();
+    /// <summary>
+    /// Restores schedule backup payload from Supabase into local preferences.
+    /// </summary>
+    /// <returns><c>true</c> when restore succeeds; otherwise <c>false</c>.</returns>
     Task<bool> RestoreDataAsync();
 }
 
@@ -19,11 +39,24 @@ public class SupabaseSyncService : ISupabaseSyncService
     private Client? _client;
     private readonly IDatabaseService _db;
 
+    /// <summary>
+    /// Creates the Supabase sync service.
+    /// </summary>
+    /// <param name="db">Database service dependency (reserved for extended sync scenarios).</param>
     public SupabaseSyncService(IDatabaseService db)
     {
         _db = db;
     }
 
+    /// <summary>
+    /// Initializes the Supabase client with realtime-enabled options.
+    /// </summary>
+    /// <param name="url">Supabase project URL.</param>
+    /// <param name="key">Supabase API key.</param>
+    /// <returns>A task that completes when client initialization finishes.</returns>
+    /// <remarks>
+    /// Side effects: allocates and initializes Supabase client instance.
+    /// </remarks>
     public async Task InitializeAsync(string url, string key)
     {
         var options = new SupabaseOptions { AutoConnectRealtime = true };
@@ -31,6 +64,12 @@ public class SupabaseSyncService : ISupabaseSyncService
         await _client.InitializeAsync();
     }
 
+    /// <summary>
+    /// Authenticates a user with email/password against Supabase Auth.
+    /// </summary>
+    /// <param name="email">User email.</param>
+    /// <param name="password">User password.</param>
+    /// <returns><c>true</c> when a valid user session is returned; otherwise <c>false</c>.</returns>
     public async Task<bool> SignInAsync(string email, string password)
     {
         if (_client == null) return false;
@@ -45,6 +84,13 @@ public class SupabaseSyncService : ISupabaseSyncService
         }
     }
 
+    /// <summary>
+    /// Backs up local schedule preference payload to the <c>user_backups</c> table.
+    /// </summary>
+    /// <returns><c>true</c> when upload succeeds; otherwise <c>false</c>.</returns>
+    /// <remarks>
+    /// Side effects: reads local preferences and writes backup row to Supabase.
+    /// </remarks>
     public async Task<bool> BackupDataAsync()
     {
         if (_client?.Auth.CurrentUser == null) return false;
@@ -71,6 +117,13 @@ public class SupabaseSyncService : ISupabaseSyncService
         }
     }
 
+    /// <summary>
+    /// Restores schedule payload from Supabase into local preferences.
+    /// </summary>
+    /// <returns><c>true</c> when restore succeeds and payload is non-empty; otherwise <c>false</c>.</returns>
+    /// <remarks>
+    /// Side effects: writes restored schedule JSON into local preferences.
+    /// </remarks>
     public async Task<bool> RestoreDataAsync()
     {
         if (_client?.Auth.CurrentUser == null) return false;

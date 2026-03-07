@@ -33,6 +33,16 @@ public partial class EditBlockViewModel : ObservableObject
     // Callback so MainViewModel can refresh its list
     public Action<ScheduleBlock, bool>? OnSaved;  // (block, isNew)
 
+    /// <summary>
+    /// Creates a view model for adding or editing a schedule block for a specific day.
+    /// </summary>
+    /// <param name="db">Database service (reserved for future persistence enhancements).</param>
+    /// <param name="dayName">Day label the block belongs to.</param>
+    /// <param name="existing">Existing block when editing; <c>null</c> for create mode.</param>
+    /// <param name="currentDayBlocks">Current day block list used to build time options.</param>
+    /// <remarks>
+    /// Side effects: initializes editable properties and prepopulates selectable time options.
+    /// </remarks>
     public EditBlockViewModel(IDatabaseService db, string dayName, ScheduleBlock? existing = null, List<ScheduleBlock>? currentDayBlocks = null)
     {
         _db = db;
@@ -57,6 +67,13 @@ public partial class EditBlockViewModel : ObservableObject
         }
     }
 
+    /// <summary>
+    /// Builds available time options from existing blocks so users can align new blocks to known schedule slots.
+    /// </summary>
+    /// <returns>None.</returns>
+    /// <remarks>
+    /// Side effects: replaces <see cref="AvailableTimes"/> with sorted, distinct entries.
+    /// </remarks>
     private void PopulateAvailableTimes()
     {
         var existingTimes = _currentDayBlocks
@@ -70,6 +87,7 @@ public partial class EditBlockViewModel : ObservableObject
         var options = new List<TimeOption>();
         foreach (var ts in existingTimes)
         {
+            // Use lowercase AM/PM text to match current design language.
             var dt = DateTime.Today.Add(ts);
             string display = dt.ToString("h:mm tt").ToLower(); // matches "5:30 am"
             options.Add(new TimeOption { Time24 = ts.ToString(@"hh\:mm"), DisplayTime = display });
@@ -78,6 +96,13 @@ public partial class EditBlockViewModel : ObservableObject
         AvailableTimes = options;
     }
 
+    /// <summary>
+    /// Validates and saves the edited block, then notifies the owner view model through callback.
+    /// </summary>
+    /// <returns>A task that completes after toast display and back navigation.</returns>
+    /// <remarks>
+    /// Side effects: mutates or creates a block instance, invokes <see cref="OnSaved"/>, shows toast, and navigates back.
+    /// </remarks>
     [RelayCommand]
     private async Task SaveAsync()
     {
@@ -102,6 +127,13 @@ public partial class EditBlockViewModel : ObservableObject
         await Shell.Current.GoToAsync("..");
     }
 
+    /// <summary>
+    /// Confirms and requests deletion of the existing block via callback to the owning screen.
+    /// </summary>
+    /// <returns>A task that completes after confirmation and navigation.</returns>
+    /// <remarks>
+    /// Side effects: may invoke <see cref="OnSaved"/> as a delete signal and navigate back.
+    /// </remarks>
     [RelayCommand]
     private async Task DeleteAsync()
     {

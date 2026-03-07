@@ -19,12 +19,25 @@ public partial class EnergySliderControl : ContentView
         set => SetValue(ValueProperty, value);
     }
 
+    /// <summary>
+    /// Initializes the energy slider control and builds selectable rating dots.
+    /// </summary>
+    /// <remarks>
+    /// Side effects: populates visual child elements in <c>DotsContainer</c>.
+    /// </remarks>
     public EnergySliderControl()
     {
         InitializeComponent();
         GenerateDots();
     }
 
+    /// <summary>
+    /// Creates the five selectable dot UI elements and wires tap handlers for two-way value updates.
+    /// </summary>
+    /// <returns>None.</returns>
+    /// <remarks>
+    /// Side effects: clears and repopulates <c>DotsContainer</c>, and attaches gesture handlers.
+    /// </remarks>
     private void GenerateDots()
     {
         DotsContainer.Children.Clear();
@@ -51,6 +64,7 @@ public partial class EnergySliderControl : ContentView
             int selectedValue = i;
             tapGesture.Tapped += (s, e) =>
             {
+                // Capture loop variable via local copy to avoid closure issues across iterations.
                 Value = selectedValue;
             };
             border.GestureRecognizers.Add(tapGesture);
@@ -63,11 +77,25 @@ public partial class EnergySliderControl : ContentView
         UpdateDots();
     }
 
+    /// <summary>
+    /// Handles bindable <see cref="Value"/> changes and refreshes dot visuals.
+    /// </summary>
+    /// <param name="bindable">Control instance whose value changed.</param>
+    /// <param name="oldValue">Previous value.</param>
+    /// <param name="newValue">New value.</param>
+    /// <returns>None.</returns>
     private static void OnValueChanged(BindableObject bindable, object oldValue, object newValue)
     {
         (bindable as EnergySliderControl)?.UpdateDots();
     }
 
+    /// <summary>
+    /// Applies active/inactive styles across all dots based on current selected value.
+    /// </summary>
+    /// <returns>None.</returns>
+    /// <remarks>
+    /// Side effects: updates border/background/text colors of child dot elements.
+    /// </remarks>
     private void UpdateDots()
     {
         if (DotsContainer == null || DotsContainer.Children.Count == 0) return;
@@ -84,6 +112,7 @@ public partial class EnergySliderControl : ContentView
 
                 if (dotValue <= Value)
                 {
+                    // All dots up to selected value are highlighted to create a progressive rating effect.
                     border.BackgroundColor = activeColor.WithAlpha(0.2f);
                     border.Stroke = activeColor;
                     if (label != null) label.TextColor = activeColor;
@@ -98,6 +127,11 @@ public partial class EnergySliderControl : ContentView
         }
     }
 
+    /// <summary>
+    /// Maps a selected numeric rating to a UI accent color.
+    /// </summary>
+    /// <param name="val">Energy rating from 1 to 5.</param>
+    /// <returns>Color associated with the selected rating.</returns>
     private Color GetColorForValue(int val)
     {
         return val switch

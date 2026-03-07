@@ -25,6 +25,14 @@ public partial class AnalyticsViewModel : ObservableObject
 
     public ObservableCollection<GoalTrackerItem> WeeklyGoalItems { get; } = new();
 
+    /// <summary>
+    /// Creates the analytics view model and starts initial data hydration for charts and streak metrics.
+    /// </summary>
+    /// <param name="streakService">Service that provides streak history and aggregates.</param>
+    /// <param name="databaseService">Service that provides check-ins and weekly goal records.</param>
+    /// <remarks>
+    /// Side effects: immediately starts asynchronous loading via <see cref="LoadAsync"/>.
+    /// </remarks>
     public AnalyticsViewModel(IStreakService streakService, IDatabaseService databaseService)
     {
         _streakService  = streakService;
@@ -32,6 +40,13 @@ public partial class AnalyticsViewModel : ObservableObject
         _ = LoadAsync();
     }
 
+    /// <summary>
+    /// Loads analytics data for streak cards, heatmap, mood trend, and weekly goal summary.
+    /// </summary>
+    /// <returns>A task that completes when all analytics collections are populated.</returns>
+    /// <remarks>
+    /// Side effects: clears and repopulates observable collections and toggles <see cref="IsLoading"/>.
+    /// </remarks>
     [RelayCommand]
     private async Task LoadAsync()
     {
@@ -47,6 +62,7 @@ public partial class AnalyticsViewModel : ObservableObject
             var today = DateTime.Today;
             for (int i = 83; i >= 0; i--)
             {
+                // Fill a 12x7 grid from oldest to newest so UI columns map to weeks left-to-right.
                 var date  = today.AddDays(-i);
                 var entry = streakRecords.FirstOrDefault(s => s.Date.Date == date);
                 HeatmapCells.Add(new HeatmapCell
@@ -62,6 +78,7 @@ public partial class AnalyticsViewModel : ObservableObject
             var checkIns = await _databaseService.GetRecentCheckInsAsync(14);
             foreach (var ci in checkIns)
             {
+                // Preserve query order (descending date) so the UI timeline remains consistent.
                 MoodTrend.Add(new MoodEntry
                 {
                     Date   = ci.Date,
@@ -77,6 +94,13 @@ public partial class AnalyticsViewModel : ObservableObject
         finally { IsLoading = false; }
     }
 
+    /// <summary>
+    /// Loads this week's saved goals and computes display-friendly completion and countdown text.
+    /// </summary>
+    /// <returns>A task that completes when weekly goal UI state is populated.</returns>
+    /// <remarks>
+    /// Side effects: mutates weekly goal collections and summary flags/text fields.
+    /// </remarks>
     private async Task LoadWeeklyGoalsAsync()
     {
         WeeklyGoalItems.Clear();
@@ -107,6 +131,16 @@ public partial class AnalyticsViewModel : ObservableObject
         HasWeeklyGoals = true;
     }
 
+    /// <summary>
+    /// Adds a goal item to the weekly tracker only when the goal text has meaningful content.
+    /// </summary>
+    /// <param name="title">Category title shown in the analytics panel.</param>
+    /// <param name="goalText">Raw goal text from persistence.</param>
+    /// <param name="isDone">Completion flag for the goal.</param>
+    /// <returns>None.</returns>
+    /// <remarks>
+    /// Side effects: appends a new <see cref="GoalTrackerItem"/> to <see cref="WeeklyGoalItems"/>.
+    /// </remarks>
     private void AddGoalIfPresent(string title, string goalText, bool isDone)
     {
         if (string.IsNullOrWhiteSpace(goalText))
@@ -120,12 +154,22 @@ public partial class AnalyticsViewModel : ObservableObject
         });
     }
 
+    /// <summary>
+    /// Calculates the Monday date for the week containing the provided date.
+    /// </summary>
+    /// <param name="date">Any date within the target week.</param>
+    /// <returns>The Monday (date-only) for that week.</returns>
     private static DateTime GetMonday(DateTime date)
     {
         int diff = (7 + (date.DayOfWeek - DayOfWeek.Monday)) % 7;
         return date.AddDays(-diff).Date;
     }
 
+    /// <summary>
+    /// Computes remaining days in the current week, clamping negative values to zero.
+    /// </summary>
+    /// <param name="date">Reference date used for the countdown.</param>
+    /// <returns>Number of days left including the current date boundary behavior.</returns>
     private static int GetDaysLeftInWeek(DateTime date)
     {
         var weekEnd = GetMonday(date).AddDays(6);

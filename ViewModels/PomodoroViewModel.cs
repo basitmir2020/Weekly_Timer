@@ -53,6 +53,12 @@ public partial class PomodoroViewModel : ObservableObject
 
     private int _totalSecondsForCurrentMode;
 
+    /// <summary>
+    /// Initializes timer infrastructure and defaults the view model to focus mode.
+    /// </summary>
+    /// <remarks>
+    /// Side effects: creates a dispatcher timer and subscribes to its tick event.
+    /// </remarks>
     public PomodoroViewModel()
     {
         _timer = Application.Current.Dispatcher.CreateTimer();
@@ -62,6 +68,14 @@ public partial class PomodoroViewModel : ObservableObject
         SetMode(TimerMode.Focus);
     }
 
+    /// <summary>
+    /// Switches timer mode and resets countdown/progress values for that mode.
+    /// </summary>
+    /// <param name="mode">Target timer phase to activate.</param>
+    /// <returns>None.</returns>
+    /// <remarks>
+    /// Side effects: updates mode, countdown seconds, progress percentage, and state label.
+    /// </remarks>
     private void SetMode(TimerMode mode)
     {
         CurrentMode = mode;
@@ -80,10 +94,16 @@ public partial class PomodoroViewModel : ObservableObject
         };
     }
 
+    /// <summary>
+    /// Resolves duration in seconds for a given mode, including custom minute/second input.
+    /// </summary>
+    /// <param name="mode">Timer mode to evaluate.</param>
+    /// <returns>Total duration in seconds for the selected mode.</returns>
     private int GetSecondsForMode(TimerMode mode)
     {
         if (mode == TimerMode.Custom)
         {
+            // Custom mode uses separate minute/second fields from the custom timer sheet.
             return (int)Math.Round((CustomMinutes * 60) + CustomSeconds);
         }
 
@@ -98,6 +118,13 @@ public partial class PomodoroViewModel : ObservableObject
         return (int)Math.Round(Math.Max(1, minutes) * 60);
     }
 
+    /// <summary>
+    /// Toggles the timer between running and paused states.
+    /// </summary>
+    /// <returns>None.</returns>
+    /// <remarks>
+    /// Side effects: starts or stops the dispatcher timer and updates <see cref="IsRunning"/>.
+    /// </remarks>
     [RelayCommand]
     private void StartPauseTimer()
     {
@@ -113,6 +140,13 @@ public partial class PomodoroViewModel : ObservableObject
         }
     }
 
+    /// <summary>
+    /// Stops the current phase and immediately transitions to the next timer phase.
+    /// </summary>
+    /// <returns>None.</returns>
+    /// <remarks>
+    /// Side effects: stops timer execution and mutates mode/cycle state through phase transition.
+    /// </remarks>
     [RelayCommand]
     private void SkipTimer()
     {
@@ -121,6 +155,13 @@ public partial class PomodoroViewModel : ObservableObject
         TransitionToNextPhase();
     }
 
+    /// <summary>
+    /// Resets the timer workflow back to initial focus mode and clears completed cycle count.
+    /// </summary>
+    /// <returns>None.</returns>
+    /// <remarks>
+    /// Side effects: stops timer and resets mode/cycle state.
+    /// </remarks>
     [RelayCommand]
     private void ResetTimer()
     {
@@ -130,6 +171,13 @@ public partial class PomodoroViewModel : ObservableObject
         SetMode(TimerMode.Focus);
     }
 
+    /// <summary>
+    /// Applies the currently entered custom duration and returns to the timer view.
+    /// </summary>
+    /// <returns>None.</returns>
+    /// <remarks>
+    /// Side effects: stops timer, sets custom mode values, and hides the custom input UI.
+    /// </remarks>
     [RelayCommand]
     private void ApplyCustomTimer()
     {
@@ -139,18 +187,30 @@ public partial class PomodoroViewModel : ObservableObject
         IsCustomTimerVisible = false;
     }
 
+    /// <summary>
+    /// Opens the custom timer configuration panel.
+    /// </summary>
+    /// <returns>None.</returns>
     [RelayCommand]
     private void ShowCustomTimer()
     {
         IsCustomTimerVisible = true;
     }
 
+    /// <summary>
+    /// Closes the custom timer configuration panel.
+    /// </summary>
+    /// <returns>None.</returns>
     [RelayCommand]
     private void CloseCustomTimer()
     {
         IsCustomTimerVisible = false;
     }
 
+    /// <summary>
+    /// Switches the timer to focus mode and ensures it is not running.
+    /// </summary>
+    /// <returns>None.</returns>
     [RelayCommand]
     private void SetFocusMode()
     {
@@ -159,6 +219,10 @@ public partial class PomodoroViewModel : ObservableObject
         SetMode(TimerMode.Focus);
     }
 
+    /// <summary>
+    /// Switches the timer to short-break mode and ensures it is not running.
+    /// </summary>
+    /// <returns>None.</returns>
     [RelayCommand]
     private void SetBreakMode()
     {
@@ -167,6 +231,15 @@ public partial class PomodoroViewModel : ObservableObject
         SetMode(TimerMode.ShortBreak);
     }
 
+    /// <summary>
+    /// Handles per-second timer ticks, updating countdown/progress and transitioning when time reaches zero.
+    /// </summary>
+    /// <param name="sender">Timer source.</param>
+    /// <param name="e">Event arguments for the tick event.</param>
+    /// <returns>None.</returns>
+    /// <remarks>
+    /// Side effects: mutates countdown state, triggers haptic feedback, and may change timer phase.
+    /// </remarks>
     private void Timer_Tick(object sender, EventArgs e)
     {
         if (SecondsRemaining > 0)
@@ -176,6 +249,7 @@ public partial class PomodoroViewModel : ObservableObject
         }
         else
         {
+            // Transition only after stopping to avoid duplicate ticks racing the phase change.
             _timer.Stop();
             IsRunning = false;
             HapticFeedback.Default.Perform(HapticFeedbackType.LongPress);
@@ -183,6 +257,13 @@ public partial class PomodoroViewModel : ObservableObject
         }
     }
 
+    /// <summary>
+    /// Advances pomodoro flow between focus and breaks, inserting a long break every fourth focus cycle.
+    /// </summary>
+    /// <returns>None.</returns>
+    /// <remarks>
+    /// Side effects: updates <see cref="CycleCount"/> and active mode state.
+    /// </remarks>
     private void TransitionToNextPhase()
     {
         if (CurrentMode == TimerMode.Focus)

@@ -5,11 +5,22 @@ namespace WeeklyTimetable.Services;
 
 public interface IExportService
 {
+    /// <summary>
+    /// Generates and shares a PNG summary card for the current week.
+    /// </summary>
+    /// <returns>File path to the exported image when successful; otherwise <c>null</c>.</returns>
     Task<string?> ExportWeeklySummaryAsPngAsync();
 }
 
 public class ExportService : IExportService
 {
+    /// <summary>
+    /// Renders a summary image using SkiaSharp, writes it to cache, and opens the platform share sheet.
+    /// </summary>
+    /// <returns>Generated PNG file path, or <c>null</c> if generation/sharing fails.</returns>
+    /// <remarks>
+    /// Side effects: creates a file in cache storage and triggers system share UI.
+    /// </remarks>
     public async Task<string?> ExportWeeklySummaryAsPngAsync()
     {
         try

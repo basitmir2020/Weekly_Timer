@@ -5,12 +5,22 @@ namespace WeeklyTimetable.Views;
 
 public partial class OnboardingPage : ContentPage
 {
+    /// <summary>
+    /// Initializes onboarding page and assigns local onboarding view model as binding context.
+    /// </summary>
     public OnboardingPage()
     {
         InitializeComponent();
         BindingContext = new OnboardingViewModel();
     }
 
+    /// <summary>
+    /// Connects page indicator to the onboarding carousel when the page becomes visible.
+    /// </summary>
+    /// <returns>None.</returns>
+    /// <remarks>
+    /// Side effects: wires indicator view at runtime to ensure control references are initialized.
+    /// </remarks>
     protected override void OnAppearing()
     {
         base.OnAppearing();
@@ -38,6 +48,13 @@ public partial class OnboardingViewModel : ObservableObject
                 Body  = "7 days. DSA in the morning. Web Dev in the evening.\nWeekends for projects and deep revision." },
     };
 
+    /// <summary>
+    /// Marks onboarding as complete and navigates to the main application page.
+    /// </summary>
+    /// <returns>A task that completes after preference update and navigation.</returns>
+    /// <remarks>
+    /// Side effects: writes onboarding completion preference and performs shell navigation.
+    /// </remarks>
     [RelayCommand]
     private async Task FinishAsync()
     {

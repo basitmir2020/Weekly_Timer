@@ -2,6 +2,12 @@
 
 public partial class AppShell : Shell
 {
+    /// <summary>
+    /// Initializes app shell and registers named navigation routes.
+    /// </summary>
+    /// <remarks>
+    /// Side effects: registers routes globally in MAUI routing table.
+    /// </remarks>
     public AppShell()
     {
         InitializeComponent();
@@ -13,6 +19,13 @@ public partial class AppShell : Shell
         Routing.RegisterRoute("ProductivityPage", typeof(WeeklyTimetable.Views.ProductivityPage));
     }
 
+    /// <summary>
+    /// Handles shell appearance and redirects first-time users to onboarding.
+    /// </summary>
+    /// <returns>None.</returns>
+    /// <remarks>
+    /// Side effects: may perform shell navigation to onboarding route.
+    /// </remarks>
     protected override void OnAppearing()
     {
         base.OnAppearing();
@@ -23,6 +36,7 @@ public partial class AppShell : Shell
             bool done = Preferences.Get("onboarding_done", false);
             if (!done)
             {
+                // Absolute route ensures onboarding becomes the active root flow.
                 await GoToAsync("//OnboardingPage");
             }
         });

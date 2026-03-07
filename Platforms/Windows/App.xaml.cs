@@ -19,6 +19,10 @@ public partial class App : MauiWinUIApplication
 		this.InitializeComponent();
 	}
 
+	/// <summary>
+	/// Creates the shared MAUI app instance for Windows startup.
+	/// </summary>
+	/// <returns>Configured <see cref="MauiApp"/>.</returns>
 	protected override MauiApp CreateMauiApp() => MauiProgram.CreateMauiApp();
 }
 

@@ -4,6 +4,13 @@ namespace WeeklyTimetable.Data;
 
 public static class ScheduleData
 {
+    /// <summary>
+    /// Creates the default weekly schedule template used when no user-customized schedule exists.
+    /// </summary>
+    /// <returns>A dictionary keyed by day name with ordered schedule blocks.</returns>
+    /// <remarks>
+    /// Side effects: none; returns a newly allocated in-memory schedule.
+    /// </remarks>
     public static Dictionary<string, List<ScheduleBlock>> GetDefaultSchedule()
     {
         var schedule = new Dictionary<string, List<ScheduleBlock>>();
@@ -11,12 +18,21 @@ public static class ScheduleData
 
         foreach (var day in days)
         {
+            // Build each day independently so callers can mutate one day without affecting others.
             schedule[day] = GetTemplateBlocksForDay(day);
         }
 
         return schedule;
     }
 
+    /// <summary>
+    /// Produces the default block list for a specific day and computes each block duration.
+    /// </summary>
+    /// <param name="day">Target day name (for example, Monday).</param>
+    /// <returns>Ordered list of schedule blocks for the requested day.</returns>
+    /// <remarks>
+    /// Side effects: none; returns a newly allocated list.
+    /// </remarks>
     private static List<ScheduleBlock> GetTemplateBlocksForDay(string day)
     {
         var isWeekend = day == "Saturday" || day == "Sunday";
@@ -90,6 +106,7 @@ public static class ScheduleData
             if (next < current) 
                 next = next.Add(TimeSpan.FromDays(1)); // Handles crossing midnight
 
+            // Duration is inferred from neighboring block start times.
             blocks[i].DurationMinutes = (int)(next - current).TotalMinutes;
         }
 
@@ -99,6 +116,11 @@ public static class ScheduleData
         return blocks;
     }
 
+    /// <summary>
+    /// Resolves the weekday-specific morning study topic.
+    /// </summary>
+    /// <param name="day">Day name used for topic selection.</param>
+    /// <returns>Topic text used in the generated morning study label.</returns>
     private static string GetMorningStudyTopic(string day) => day switch
     {
         "Monday" or "Wednesday" => "DSA",
@@ -107,6 +129,11 @@ public static class ScheduleData
         _ => "Study"
     };
 
+    /// <summary>
+    /// Resolves the weekday-specific evening study topic.
+    /// </summary>
+    /// <param name="day">Day name used for topic selection.</param>
+    /// <returns>Topic text used in the generated evening study label.</returns>
     private static string GetEveningStudyTopic(string day) => day switch
     {
         "Monday" or "Wednesday" => "Web Dev",

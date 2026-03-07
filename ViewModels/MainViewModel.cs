@@ -55,6 +55,16 @@ public partial class MainViewModel : ObservableObject, IRecipient<WeeklyTimetabl
     public ObservableCollection<DayOverviewViewModel> WeekStats { get; } = new();
     public ObservableCollection<CategoryStat> ActiveCategories { get; } = new();
 
+    /// <summary>
+    /// Creates the main schedule view model and wires up dependencies for persistence, streaks, and notifications.
+    /// </summary>
+    /// <param name="persistenceService">Service used to save and load schedule state.</param>
+    /// <param name="databaseService">Service used by detail/edit flows for data access.</param>
+    /// <param name="streakService">Service used to compute and store streak progress.</param>
+    /// <param name="notificationService">Service used to schedule reminder notifications.</param>
+    /// <remarks>
+    /// Side effects: registers this instance with the weak-reference messenger for schedule refresh events.
+    /// </remarks>
     public MainViewModel(IPersistenceService persistenceService, IDatabaseService databaseService, IStreakService streakService, INotificationService notificationService)
     {
         _persistenceService = persistenceService;
@@ -68,6 +78,13 @@ public partial class MainViewModel : ObservableObject, IRecipient<WeeklyTimetabl
         CommunityToolkit.Mvvm.Messaging.WeakReferenceMessenger.Default.RegisterAll(this);
     }
 
+    /// <summary>
+    /// Loads schedule data, applies migration from legacy storage, refreshes UI state, and triggers notification/streak sync.
+    /// </summary>
+    /// <returns>A task that completes when initial data loading and state synchronization finishes.</returns>
+    /// <remarks>
+    /// Side effects: mutates in-memory schedule collections, persists migrated state, updates streak state, and schedules notifications.
+    /// </remarks>
     public async Task LoadDataAsync()
     {
         if (IsLoaded) return;
@@ -94,6 +111,7 @@ public partial class MainViewModel : ObservableObject, IRecipient<WeeklyTimetabl
                     // Map state onto blocks
                     foreach (var kvp in _fullSchedule)
                     {
+                        // Legacy state keys are "DayName__Index"; map those values into the richer block model.
                         var dayName = kvp.Key;
                         var blocks = kvp.Value;
                         for (int i = 0; i < blocks.Count; i++)
@@ -136,6 +154,14 @@ public partial class MainViewModel : ObservableObject, IRecipient<WeeklyTimetabl
         }
     }
 
+    /// <summary>
+    /// Handles schedule change messages and reloads the view model when a global update is requested.
+    /// </summary>
+    /// <param name="message">Message payload indicating whether a reload should occur.</param>
+    /// <returns>None.</returns>
+    /// <remarks>
+    /// Side effects: resets the loaded flag and starts a new asynchronous load operation.
+    /// </remarks>
     public void Receive(WeeklyTimetable.Models.ScheduleChangedMessage message)
     {
         if (message.Value)
@@ -145,6 +171,13 @@ public partial class MainViewModel : ObservableObject, IRecipient<WeeklyTimetabl
         }
     }
 
+    /// <summary>
+    /// Runs notification scheduling in a guarded context so errors never break the main UI flow.
+    /// </summary>
+    /// <returns>A task that completes after scheduling attempt finishes.</returns>
+    /// <remarks>
+    /// Side effects: may queue notifications through <see cref="_notificationService"/>.
+    /// </remarks>
     private async Task SafeScheduleNotificationsAsync()
     {
         try
@@ -157,6 +190,13 @@ public partial class MainViewModel : ObservableObject, IRecipient<WeeklyTimetabl
         }
     }
 
+    /// <summary>
+    /// Ensures the currently selected active day exists in the loaded schedule.
+    /// </summary>
+    /// <returns>None.</returns>
+    /// <remarks>
+    /// Side effects: updates <see cref="ActiveDay"/> when it is missing or invalid.
+    /// </remarks>
     private void EnsureActiveDayIsValid()
     {
         if (!string.IsNullOrWhiteSpace(ActiveDay) && _fullSchedule.ContainsKey(ActiveDay))
@@ -168,6 +208,13 @@ public partial class MainViewModel : ObservableObject, IRecipient<WeeklyTimetabl
             : _fullSchedule.Keys.FirstOrDefault() ?? "Monday";
     }
 
+    /// <summary>
+    /// Cancels existing reminders and schedules start/end notifications for the next seven days.
+    /// </summary>
+    /// <returns>A task that completes when notification scheduling has been attempted.</returns>
+    /// <remarks>
+    /// Side effects: clears previous notifications and enqueues new local notifications.
+    /// </remarks>
     private async Task ScheduleNotificationsAsync()
     {
         await _notificationService.CancelAllNotificationsAsync();
@@ -188,7 +235,9 @@ public partial class MainViewModel : ObservableObject, IRecipient<WeeklyTimetabl
                 {
                     foreach (var block in blocks)
                     {
+                        // Skip already completed blocks for today to avoid redundant alerts.
                         if (dayOffset == 0 && block.IsCompleted) continue;
+                        // Guard against invalid user-edited times.
                         if (!TimeSpan.TryParse(block.Time, out TimeSpan blockTime)) continue;
 
                         var blockStartDateTime = targetDate.Add(blockTime);
@@ -219,6 +268,14 @@ public partial class MainViewModel : ObservableObject, IRecipient<WeeklyTimetabl
         }
     }
 
+    /// <summary>
+    /// Attempts to switch to a selected day while enforcing the product rule that only today's schedule is interactive.
+    /// </summary>
+    /// <param name="dayName">Requested day name from the UI.</param>
+    /// <returns>A task that completes after any feedback toast is shown.</returns>
+    /// <remarks>
+    /// Side effects: updates active day/filter state and may display informational toasts.
+    /// </remarks>
     [RelayCommand]
     private async Task SwitchDayAsync(string dayName)
     {
@@ -247,16 +304,32 @@ public partial class MainViewModel : ObservableObject, IRecipient<WeeklyTimetabl
         ApplyActiveDay(todayName);
     }
 
+    /// <summary>
+    /// Shows feedback that users cannot navigate backward from the current day.
+    /// </summary>
+    /// <returns>A task representing toast display completion.</returns>
     private static Task ShowPreviousDayToastAsync()
     {
         return ShowShortToastAsync("You cannot go to previous day.");
     }
 
+    /// <summary>
+    /// Shows feedback that users cannot navigate forward from the current day.
+    /// </summary>
+    /// <returns>A task representing toast display completion.</returns>
     private static Task ShowForwardDayToastAsync()
     {
         return ShowShortToastAsync("You cannot go to forward day.");
     }
 
+    /// <summary>
+    /// Displays a short toast message on the UI thread.
+    /// </summary>
+    /// <param name="message">Text to show in the toast.</param>
+    /// <returns>A task representing toast display completion.</returns>
+    /// <remarks>
+    /// Side effects: dispatches work to the main thread and shows a transient toast.
+    /// </remarks>
     private static async Task ShowShortToastAsync(string message)
     {
         await MainThread.InvokeOnMainThreadAsync(async () =>
@@ -265,6 +338,14 @@ public partial class MainViewModel : ObservableObject, IRecipient<WeeklyTimetabl
         });
     }
 
+    /// <summary>
+    /// Applies the selected day as active, resets filters, and recomputes day-level UI state.
+    /// </summary>
+    /// <param name="dayName">Day to activate.</param>
+    /// <returns>None.</returns>
+    /// <remarks>
+    /// Side effects: mutates active day, active filter, week highlight state, filtered list, and overview stats.
+    /// </remarks>
     private void ApplyActiveDay(string dayName)
     {
         ActiveDay = dayName;
@@ -272,6 +353,7 @@ public partial class MainViewModel : ObservableObject, IRecipient<WeeklyTimetabl
         
         foreach (var stat in WeekStats)
         {
+            // Keep top week strip in sync with the selected day.
             stat.IsActive = (stat.DayName == dayName);
         }
 
@@ -279,11 +361,22 @@ public partial class MainViewModel : ObservableObject, IRecipient<WeeklyTimetabl
         UpdateDayStats();
     }
 
+    /// <summary>
+    /// Determines whether the currently active day corresponds to today's date.
+    /// </summary>
+    /// <returns><c>true</c> when the active day is today; otherwise <c>false</c>.</returns>
     private bool IsActiveDayToday()
     {
         return string.Equals(ActiveDay, DateTime.Today.DayOfWeek.ToString(), StringComparison.OrdinalIgnoreCase);
     }
 
+    /// <summary>
+    /// Updates today's streak status when the active day is today and refreshes the displayed streak count.
+    /// </summary>
+    /// <returns>A task that completes after streak state is synchronized.</returns>
+    /// <remarks>
+    /// Side effects: writes streak records through the streak service and updates <see cref="CurrentStreak"/>.
+    /// </remarks>
     private async Task SyncTodayStreakAsync()
     {
         if (!IsActiveDayToday())
@@ -293,6 +386,14 @@ public partial class MainViewModel : ObservableObject, IRecipient<WeeklyTimetabl
         CurrentStreak = await _streakService.GetCurrentStreakAsync();
     }
 
+    /// <summary>
+    /// Toggles a category filter for the active day and refreshes the visible blocks.
+    /// </summary>
+    /// <param name="categoryKey">Category key selected by the user.</param>
+    /// <returns>None.</returns>
+    /// <remarks>
+    /// Side effects: updates <see cref="ActiveFilter"/> and repopulates <see cref="FilteredBlocks"/>.
+    /// </remarks>
     [RelayCommand]
     public void SetFilter(string categoryKey)
     {
@@ -300,6 +401,14 @@ public partial class MainViewModel : ObservableObject, IRecipient<WeeklyTimetabl
         ApplyFilter();
     }
 
+    /// <summary>
+    /// Reapplies filtering whenever focus mode changes.
+    /// </summary>
+    /// <param name="value">New focus mode value.</param>
+    /// <returns>None.</returns>
+    /// <remarks>
+    /// Side effects: refreshes filtered block output when state is valid.
+    /// </remarks>
     partial void OnIsFocusModeChanged(bool value)
     {
         if (_fullSchedule.Count == 0 || string.IsNullOrWhiteSpace(ActiveDay) || !_fullSchedule.ContainsKey(ActiveDay))
@@ -308,7 +417,14 @@ public partial class MainViewModel : ObservableObject, IRecipient<WeeklyTimetabl
         ApplyFilter();
     }
 
-    /// <summary>Open BlockDetailSheet to view notes for a block (spec §8.11)</summary>
+    /// <summary>
+    /// Opens a modal detail sheet for the selected block so notes can be viewed or edited.
+    /// </summary>
+    /// <param name="block">Block selected from the active day list.</param>
+    /// <returns>A task that completes after modal navigation is requested.</returns>
+    /// <remarks>
+    /// Side effects: pushes a modal page onto the navigation stack.
+    /// </remarks>
     [RelayCommand]
     private async Task OpenBlockDetailAsync(ScheduleBlock block)
     {
@@ -317,6 +433,13 @@ public partial class MainViewModel : ObservableObject, IRecipient<WeeklyTimetabl
         await Shell.Current.Navigation.PushModalAsync(page);
     }
 
+    /// <summary>
+    /// Opens the block editor for the active day and handles insertion/sorting of newly created blocks.
+    /// </summary>
+    /// <returns>A task that completes after navigation to the edit page.</returns>
+    /// <remarks>
+    /// Side effects: may mutate active-day schedule, persist schedule changes, refresh UI collections, and sync streak state.
+    /// </remarks>
     [RelayCommand]
     private async Task AddBlockAsync()
     {
@@ -333,6 +456,7 @@ public partial class MainViewModel : ObservableObject, IRecipient<WeeklyTimetabl
                 // Sort chronologically by time
                 targetList.Sort((a, b) => 
                 {
+                    // Invalid times are intentionally pushed after valid times to keep a predictable order.
                     TimeSpan tempA, tempB;
                     bool aValid = TimeSpan.TryParse(a.Time, out tempA);
                     bool bValid = TimeSpan.TryParse(b.Time, out tempB);
@@ -358,6 +482,13 @@ public partial class MainViewModel : ObservableObject, IRecipient<WeeklyTimetabl
         await Shell.Current.Navigation.PushAsync(page);
     }
 
+    /// <summary>
+    /// Builds the filtered block list and category chips for the active day, including focus-mode projection.
+    /// </summary>
+    /// <returns>None.</returns>
+    /// <remarks>
+    /// Side effects: clears and repopulates <see cref="FilteredBlocks"/> and <see cref="ActiveCategories"/>.
+    /// </remarks>
     private void ApplyFilter()
     {
         FilteredBlocks.Clear();
@@ -371,6 +502,7 @@ public partial class MainViewModel : ObservableObject, IRecipient<WeeklyTimetabl
             ActiveFilter != "all" &&
             !dayBlocks.Any(b => b.Category == ActiveFilter))
         {
+            // Recover from stale filter values when categories changed after edits.
             ActiveFilter = "all";
         }
         
@@ -391,6 +523,7 @@ public partial class MainViewModel : ObservableObject, IRecipient<WeeklyTimetabl
                 .Where(b => !b.IsCompleted && TimeSpan.TryParse(b.Time, out var t) && t >= now)
                 .Take(3)
                 .ToList();
+            // Fallback keeps UI populated even when no upcoming blocks satisfy the strict predicate.
             blocksToShow = upcoming.Any() ? upcoming : dayBlocks.Take(3);
         }
         else
@@ -406,9 +539,18 @@ public partial class MainViewModel : ObservableObject, IRecipient<WeeklyTimetabl
         }
     }
 
+    /// <summary>
+    /// Marks a block as completed after validating timing constraints for today's schedule.
+    /// </summary>
+    /// <param name="block">Block selected for completion.</param>
+    /// <returns>A task that completes after persistence and UI refresh are done.</returns>
+    /// <remarks>
+    /// Side effects: mutates block completion state, persists schedule, updates stats, and may update streak records.
+    /// </remarks>
     [RelayCommand]
     private async Task ToggleStepAsync(ScheduleBlock block)
     {
+        // Naming suggestion: `CompleteBlockAsync` would better reflect one-way completion behavior.
         if (!_fullSchedule.ContainsKey(ActiveDay)) return;
         
         if (block.IsCompleted)
@@ -443,6 +585,13 @@ public partial class MainViewModel : ObservableObject, IRecipient<WeeklyTimetabl
         await SyncTodayStreakAsync();
     }
 
+    /// <summary>
+    /// Resets all completion flags for the active day and recalculates all day/week aggregates.
+    /// </summary>
+    /// <returns>A task that completes after persistence and aggregate refreshes finish.</returns>
+    /// <remarks>
+    /// Side effects: mutates completion flags, saves schedule state, updates filters/stats, and updates streak state.
+    /// </remarks>
     [RelayCommand]
     private async Task ResetDayAsync()
     {
@@ -451,6 +600,7 @@ public partial class MainViewModel : ObservableObject, IRecipient<WeeklyTimetabl
         var list = _fullSchedule[ActiveDay];
         for (int i = 0; i < list.Count; i++)
         {
+            // Explicit index-based loop avoids allocating an enumerator on hot UI paths.
             list[i].IsCompleted = false;
         }
 
@@ -467,6 +617,13 @@ public partial class MainViewModel : ObservableObject, IRecipient<WeeklyTimetabl
         await SyncTodayStreakAsync();
     }
 
+    /// <summary>
+    /// Recomputes aggregate progress metrics for the active day.
+    /// </summary>
+    /// <returns>None.</returns>
+    /// <remarks>
+    /// Side effects: replaces <see cref="ActiveDayStats"/> and updates celebration/completion flags.
+    /// </remarks>
     private void UpdateDayStats()
     {
         if (!_fullSchedule.ContainsKey(ActiveDay)) return;
@@ -489,6 +646,13 @@ public partial class MainViewModel : ObservableObject, IRecipient<WeeklyTimetabl
         IsDayCelebrated = total > 0 && done == total;
     }
 
+    /// <summary>
+    /// Rebuilds week-level overview statistics used by the top day strip.
+    /// </summary>
+    /// <returns>None.</returns>
+    /// <remarks>
+    /// Side effects: clears and repopulates <see cref="WeekStats"/>.
+    /// </remarks>
     private void UpdateWeekStats()
     {
         WeekStats.Clear();
@@ -496,6 +660,7 @@ public partial class MainViewModel : ObservableObject, IRecipient<WeeklyTimetabl
         
         foreach (var day in days)
         {
+            // Only add days present in the current schedule snapshot.
             if (_fullSchedule.TryGetValue(day, out var blocks))
             {
                 int total = blocks.Count;

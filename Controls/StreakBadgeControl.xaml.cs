@@ -29,6 +29,9 @@ public partial class StreakBadgeControl : ContentView
         set => SetValue(CommandProperty, value);
     }
 
+    /// <summary>
+    /// Initializes the streak badge control and loads its XAML content.
+    /// </summary>
     public StreakBadgeControl()
     {
         InitializeComponent();

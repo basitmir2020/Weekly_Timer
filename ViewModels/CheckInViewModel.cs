@@ -15,6 +15,13 @@ public partial class CheckInViewModel : ObservableObject
     [ObservableProperty] private bool _isSaved;
     [ObservableProperty] private bool _isMorning;
 
+    /// <summary>
+    /// Creates the daily check-in view model and loads any existing check-in for today.
+    /// </summary>
+    /// <param name="databaseService">Database service used for check-in persistence.</param>
+    /// <remarks>
+    /// Side effects: determines morning/evening mode and triggers asynchronous load of today's record.
+    /// </remarks>
     public CheckInViewModel(IDatabaseService databaseService)
     {
         _databaseService = databaseService;
@@ -22,6 +29,13 @@ public partial class CheckInViewModel : ObservableObject
         _ = LoadTodayAsync();
     }
 
+    /// <summary>
+    /// Loads today's check-in entry and hydrates the form if data already exists.
+    /// </summary>
+    /// <returns>A task that completes after lookup and property mapping.</returns>
+    /// <remarks>
+    /// Side effects: updates energy, mood, notes, and saved-state properties.
+    /// </remarks>
     private async Task LoadTodayAsync()
     {
         var existing = await _databaseService.GetCheckInAsync(DateTime.Today);
@@ -34,6 +48,13 @@ public partial class CheckInViewModel : ObservableObject
         }
     }
 
+    /// <summary>
+    /// Saves today's check-in values to persistence.
+    /// </summary>
+    /// <returns>A task that completes when the check-in record is persisted.</returns>
+    /// <remarks>
+    /// Side effects: writes/updates today's <see cref="DailyCheckIn"/> and marks the form as saved.
+    /// </remarks>
     [RelayCommand]
     private async Task SaveCheckInAsync()
     {

@@ -13,12 +13,26 @@ public partial class StreakViewModel : ObservableObject
     [ObservableProperty] private int _totalCompleteDays;
     [ObservableProperty] private List<StreakDayEntry> _last30Days = new();
 
+    /// <summary>
+    /// Creates the streak dashboard view model and triggers initial streak data load.
+    /// </summary>
+    /// <param name="streakService">Service used to fetch streak aggregates and recent history.</param>
+    /// <remarks>
+    /// Side effects: starts asynchronous loading of streak metrics.
+    /// </remarks>
     public StreakViewModel(IStreakService streakService)
     {
         _streakService = streakService;
         _ = LoadAsync();
     }
 
+    /// <summary>
+    /// Loads current streak values and last-30-day completion data.
+    /// </summary>
+    /// <returns>A task that completes once all streak properties are refreshed.</returns>
+    /// <remarks>
+    /// Side effects: updates summary counters and day list used by streak visualization.
+    /// </remarks>
     private async Task LoadAsync()
     {
         CurrentStreak = await _streakService.GetCurrentStreakAsync();
