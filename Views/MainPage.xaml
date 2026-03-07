@@ -21,8 +21,11 @@
         </ResourceDictionary>
     </ContentPage.Resources>
 
-    <!-- Base Grid layout for the entire page -->
-    <Grid RowDefinitions="Auto, *">
+    <!-- Base Grid layout for the entire page (outer wraps content + alarm overlay) -->
+    <Grid RowDefinitions="*, Auto">
+
+    <!-- ═══ Main Content ════════════════════════════════════════════════════ -->
+    <Grid Grid.Row="0" RowDefinitions="Auto, *">
         
         <!-- HEADER ROW: Title + 7 Mini Progress Bars -->
         <Border Grid.Row="0" BackgroundColor="{StaticResource BgHeader}" Margin="0,0,0,0" Padding="16, 20">
@@ -221,5 +224,48 @@
             </VerticalStackLayout>
         </ScrollView>
     </Grid>
+    <!-- ═══ End Main Content ════════════════════════════════════════════════ -->
+
+    <!-- ── Alarm Banner (floats over bottom of page when alarm is ringing) ── -->
+    <Grid Grid.Row="1"
+          IsVisible="{Binding IsAlarmActive}"
+          BackgroundColor="#CC1a0a"
+          Padding="16,12">
+        <Grid ColumnDefinitions="Auto,*,Auto" VerticalOptions="Center">
+
+            <!-- Bell icon -->
+            <Label Grid.Column="0"
+                   Text="🔔"
+                   FontSize="26"
+                   VerticalOptions="Center"
+                   Margin="0,0,12,0" />
+
+            <!-- Description -->
+            <VerticalStackLayout Grid.Column="1" VerticalOptions="Center" Spacing="2">
+                <Label Text="Block Starting Soon!"
+                       TextColor="White"
+                       FontAttributes="Bold"
+                       FontSize="15" />
+                <Label Text="Tap Stop to dismiss the alarm."
+                       TextColor="#ffcccc"
+                       FontSize="12" />
+            </VerticalStackLayout>
+
+            <!-- Stop button -->
+            <Button Grid.Column="2"
+                    Text="⏹ Stop"
+                    Command="{Binding StopAlarmCommand}"
+                    BackgroundColor="White"
+                    TextColor="#CC1a0a"
+                    FontAttributes="Bold"
+                    CornerRadius="8"
+                    HeightRequest="40"
+                    Padding="14,0"
+                    VerticalOptions="Center" />
+        </Grid>
+    </Grid>
+    <!-- ── End Alarm Banner ─────────────────────────────────────────────── -->
+
+    </Grid><!-- outer grid -->
 
 </ContentPage>

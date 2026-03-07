@@ -42,6 +42,10 @@ public class NotificationService : INotificationService
     /// </remarks>
     public Task ScheduleNotificationAsync(string title, string message, DateTime scheduleTime, int notificationId)
     {
+        // Respect the user's notification preference from settings
+        if (!Preferences.Get("notif_enabled", true))
+            return Task.CompletedTask;
+
         var request = new NotificationRequest
         {
             NotificationId = notificationId,

@@ -3,6 +3,11 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using WeeklyTimetable.Models;
+using System.Collections.ObjectModel;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
+using WeeklyTimetable.Models;
 using WeeklyTimetable.Services;
 
 namespace WeeklyTimetable.ViewModels;
@@ -11,11 +16,13 @@ public partial class SettingsViewModel : ObservableObject
 {
     private readonly ISupabaseSyncService _supabase;
     private readonly IPersistenceService _persistence;
+    private readonly IAlarmSoundPickerService _alarmSoundPicker;
 
     [ObservableProperty] private bool _notificationsEnabled;
     [ObservableProperty] private bool _hapticEnabled = true;
     [ObservableProperty] private string _selectedTheme = "Dark";
     [ObservableProperty] private string _selectedFontSize = "Medium";
+    [ObservableProperty] private string _selectedAlarmSoundName = "Default";
     
     // Master Schedule Editor
     [ObservableProperty] private string _selectedDay = "Monday";
@@ -36,17 +43,23 @@ public partial class SettingsViewModel : ObservableObject
     /// </summary>
     /// <param name="supabase">Cloud backup/restore service.</param>
     /// <param name="persistence">Local persistence service for schedule template data.</param>
+    /// <param name="alarmSoundPicker">Platform service for selecting an alarm ringtone.</param>
     /// <remarks>
     /// Side effects: reads from preferences and starts asynchronous schedule loading.
     /// </remarks>
-    public SettingsViewModel(ISupabaseSyncService supabase, IPersistenceService persistence)
+    public SettingsViewModel(ISupabaseSyncService supabase, IPersistenceService persistence, IAlarmSoundPickerService alarmSoundPicker)
     {
         _supabase = supabase;
         _persistence = persistence;
+        _alarmSoundPicker = alarmSoundPicker;
         NotificationsEnabled = Preferences.Get("notif_enabled", true);
         HapticEnabled        = Preferences.Get("haptic_enabled", true);
         SelectedTheme        = Preferences.Get("theme", "Dark");
         SelectedFontSize     = Preferences.Get("font_size", "Medium");
+
+        // Resolve the display name for the previously chosen alarm sound
+        var savedUri = Preferences.Get("alarm_sound_uri", null);
+        SelectedAlarmSoundName = _alarmSoundPicker.GetSoundName(savedUri);
 
         _ = LoadMasterScheduleAsync();
     }
@@ -156,11 +169,32 @@ public partial class SettingsViewModel : ObservableObject
     /// <returns>None.</returns>
     partial void OnHapticEnabledChanged(bool value)        => Preferences.Set("haptic_enabled", value);
     /// <summary>
-    /// Persists font size selection when it changes.
+    /// Persists font size selection and applies it globally to the application resources.
     /// </summary>
-    /// <param name="value">New font size token.</param>
+    /// <param name="value">New font size token (Small, Medium, Large).</param>
     /// <returns>None.</returns>
-    partial void OnSelectedFontSizeChanged(string value)   => Preferences.Set("font_size", value);
+    partial void OnSelectedFontSizeChanged(string value)
+    {
+        Preferences.Set("font_size", value);
+        App.ApplyFontSize(value);
+    }
+
+    /// <summary>
+    /// Opens the platform alarm sound picker and persists the chosen URI and display name.
+    /// </summary>
+    /// <returns>A task that completes after the picker result is saved.</returns>
+    /// <remarks>
+    /// Side effects: writes "alarm_sound_uri" preference and updates <see cref="SelectedAlarmSoundName"/>.
+    /// </remarks>
+    [RelayCommand]
+    private async Task PickAlarmSoundAsync()
+    {
+        var uri = await _alarmSoundPicker.PickAlarmSoundAsync();
+        if (uri == null) return; // user cancelled
+
+        Preferences.Set("alarm_sound_uri", uri);
+        SelectedAlarmSoundName = _alarmSoundPicker.GetSoundName(uri);
+    }
 
     /// <summary>
     /// Persists selected theme and applies the corresponding runtime app theme.
@@ -207,7 +241,7 @@ public partial class SettingsViewModel : ObservableObject
 public partial class TemplateBlockEditor : ObservableObject
 {
     private readonly ScheduleBlock _block;
-    private readonly Action _onChanged;
+    private readonly Func<Task> _onChanged;
 
     public string Label => _block.Label;
     public string Icon => _block.Icon;
@@ -224,7 +258,7 @@ public partial class TemplateBlockEditor : ObservableObject
     /// <remarks>
     /// Side effects: initializes editor state from block time and retains callback to trigger persistence.
     /// </remarks>
-    public TemplateBlockEditor(ScheduleBlock block, Action onChanged)
+    public TemplateBlockEditor(ScheduleBlock block, Func<Task> onChanged)
     {
         _block = block;
         _onChanged = onChanged;
@@ -243,7 +277,18 @@ public partial class TemplateBlockEditor : ObservableObject
     partial void OnTimeValueChanged(TimeSpan value)
     {
         _block.Time = value.ToString(@"hh\:mm");
-        _onChanged?.Invoke();
+        
+        // Using async void here is necessary for the partial method property change hook,
+        // but we carefully await the persistence call before signaling the refresh.
+        _ = NotifyChangedAsync();
+    }
+
+    private async Task NotifyChangedAsync()
+    {
+        if (_onChanged != null)
+        {
+            await _onChanged.Invoke();
+        }
         WeakReferenceMessenger.Default.Send(new ScheduleChangedMessage(true));
     }
 }

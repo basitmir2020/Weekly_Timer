@@ -1,6 +1,7 @@
 using CommunityToolkit.Maui;
 using Microsoft.Extensions.Logging;
 using Plugin.LocalNotification;
+using Plugin.Maui.Audio;
 using SkiaSharp.Views.Maui.Controls;
 using SkiaSharp.Views.Maui.Controls.Hosting;
 using WeeklyTimetable.Services;
@@ -26,6 +27,7 @@ public static class MauiProgram
             .UseMauiCommunityToolkit()
             .UseLocalNotification()
             .UseSkiaSharp()
+            .AddAudio()
             .ConfigureFonts(fonts =>
             {
                 fonts.AddFont("OpenSans-Regular.ttf",  "OpenSansRegular");
@@ -40,13 +42,22 @@ public static class MauiProgram
         builder.Services.AddSingleton<IPersistenceService,  PersistenceService>();
         builder.Services.AddSingleton<IDatabaseService,     DatabaseService>();
         builder.Services.AddSingleton<WeeklyTimetable.Services.INotificationService, WeeklyTimetable.Services.NotificationService>();
+        builder.Services.AddSingleton<IAlarmService,         AlarmService>();
         builder.Services.AddSingleton<IStreakService,        StreakService>();
         builder.Services.AddSingleton<IProfileService,       ProfileService>();
         builder.Services.AddSingleton<IExportService,        ExportService>();
         builder.Services.AddSingleton<ISupabaseSyncService,  SupabaseSyncService>();
 
+#if ANDROID
+        builder.Services.AddSingleton<IAlarmSoundPickerService, WeeklyTimetable.Platforms.Android.AlarmSoundPickerService>();
+        builder.Services.AddSingleton<IAlarmSchedulerService,   WeeklyTimetable.Platforms.Android.AlarmSchedulerService>();
+#else
+        builder.Services.AddSingleton<IAlarmSoundPickerService, StubAlarmSoundPickerService>();
+        builder.Services.AddSingleton<IAlarmSchedulerService,   StubAlarmSchedulerService>();
+#endif
+
         // ── ViewModels ────────────────────────────────────────────
-        builder.Services.AddTransient<MainViewModel>();
+        builder.Services.AddSingleton<MainViewModel>();
         builder.Services.AddTransient<DayOverviewViewModel>();
         builder.Services.AddTransient<PomodoroViewModel>();
         builder.Services.AddTransient<StreakViewModel>();
@@ -54,7 +65,7 @@ public static class MauiProgram
         builder.Services.AddTransient<CheckInViewModel>();
         builder.Services.AddTransient<GoalsViewModel>();
         builder.Services.AddTransient<ProfileViewModel>();
-        builder.Services.AddTransient<SettingsViewModel>();
+        builder.Services.AddSingleton<SettingsViewModel>();
         builder.Services.AddTransient<EditBlockViewModel>();
 
         // ── Views / Pages ─────────────────────────────────────────

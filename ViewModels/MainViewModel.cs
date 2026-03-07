@@ -21,6 +21,13 @@ public partial class MainViewModel : ObservableObject, IRecipient<WeeklyTimetabl
     private readonly IDatabaseService _databaseService;
     private readonly IStreakService _streakService;
     private readonly INotificationService _notificationService;
+    private readonly IAlarmService _alarmService;
+    private readonly IAlarmSchedulerService _alarmScheduler;
+
+    // Foreground alarm-check timer — fires every 30 s while the app is running.
+    private System.Threading.Timer? _alarmCheckTimer;
+    // Guard: track which block IDs have already triggered the alarm this session.
+    private readonly HashSet<string> _alarmFiredKeys = new();
 
     private Dictionary<string, List<ScheduleBlock>> _fullSchedule = new();
     
@@ -48,6 +55,10 @@ public partial class MainViewModel : ObservableObject, IRecipient<WeeklyTimetabl
     // Focus Mode (spec §8.16) — shows only current + next 2 blocks; not persisted
     [ObservableProperty]
     private bool _isFocusMode;
+
+    /// <summary>True while the alarm is actively ringing — binds to the Stop Alarm banner visibility.</summary>
+    [ObservableProperty]
+    private bool _isAlarmActive;
     
     public bool IsLoaded { get; private set; }
 
@@ -56,21 +67,24 @@ public partial class MainViewModel : ObservableObject, IRecipient<WeeklyTimetabl
     public ObservableCollection<CategoryStat> ActiveCategories { get; } = new();
 
     /// <summary>
-    /// Creates the main schedule view model and wires up dependencies for persistence, streaks, and notifications.
+    /// Creates the main schedule view model and wires up dependencies for persistence, streaks, notifications, and alarm.
     /// </summary>
     /// <param name="persistenceService">Service used to save and load schedule state.</param>
     /// <param name="databaseService">Service used by detail/edit flows for data access.</param>
     /// <param name="streakService">Service used to compute and store streak progress.</param>
     /// <param name="notificationService">Service used to schedule reminder notifications.</param>
+    /// <param name="alarmService">Service used to start/stop the looping in-app alarm.</param>
     /// <remarks>
     /// Side effects: registers this instance with the weak-reference messenger for schedule refresh events.
     /// </remarks>
-    public MainViewModel(IPersistenceService persistenceService, IDatabaseService databaseService, IStreakService streakService, INotificationService notificationService)
+    public MainViewModel(IPersistenceService persistenceService, IDatabaseService databaseService, IStreakService streakService, INotificationService notificationService, IAlarmService alarmService, IAlarmSchedulerService alarmScheduler)
     {
         _persistenceService = persistenceService;
         _databaseService = databaseService;
         _streakService = streakService;
         _notificationService = notificationService;
+        _alarmService = alarmService;
+        _alarmScheduler = alarmScheduler;
         
         ActiveDayStats = new DayOverviewViewModel();
         ActiveDay = DateTime.Today.DayOfWeek.ToString();
@@ -145,12 +159,97 @@ public partial class MainViewModel : ObservableObject, IRecipient<WeeklyTimetabl
 
             // 6. Schedule notifications (best effort; should never block UI)
             _ = SafeScheduleNotificationsAsync();
+
+            // 7. Start foreground alarm-check timer (fires every 30 s)
+            StartAlarmCheckTimer();
             
             IsLoaded = true;
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"Error during MainViewModel initialization: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Stops the ringing alarm when the user taps the Stop Alarm button.
+    /// </summary>
+    [RelayCommand]
+    private void StopAlarm()
+    {
+        _alarmService.StopAlarm();
+        _alarmScheduler.CancelAll();
+        IsAlarmActive = false;
+
+        if (Preferences.Get("haptic_enabled", true))
+            HapticFeedback.Default.Perform(HapticFeedbackType.Click);
+    }
+
+    /// <summary>
+    /// Starts a background timer that checks every 30 seconds whether any today-block
+    /// is starting within the next 5 minutes and should trigger the looping alarm.
+    /// </summary>
+    /// <remarks>
+    /// Side effects: allocates a System.Threading.Timer that fires on the thread pool.
+    /// </remarks>
+    private void StartAlarmCheckTimer()
+    {
+        _alarmCheckTimer?.Dispose();
+        _alarmCheckTimer = new System.Threading.Timer(
+            _ => CheckAndFireAlarm(),
+            null,
+            TimeSpan.Zero,             // fire immediately on load
+            TimeSpan.FromSeconds(30)); // then every 30 s
+    }
+
+    /// <summary>
+    /// Evaluates today's schedule and triggers the alarm for any block whose start is
+    /// within the 5-minute warning window and has not already been alerted this session.
+    /// </summary>
+    /// <remarks>
+    /// Runs on the thread-pool timer callback — dispatches UI updates to the main thread.
+    /// </remarks>
+    private void CheckAndFireAlarm()
+    {
+        try
+        {
+            var todayName = DateTime.Today.DayOfWeek.ToString();
+            if (!_fullSchedule.TryGetValue(todayName, out var blocks)) return;
+
+            var now = DateTime.Now;
+
+            foreach (var block in blocks)
+            {
+                if (block.IsCompleted) continue;
+                if (!TimeSpan.TryParse(block.Time, out var blockTime)) continue;
+
+                var blockStart = DateTime.Today.Add(blockTime);
+                var minutesUntilStart = (blockStart - now).TotalMinutes;
+
+                // Alarm window: between 5 minutes before start and the start time itself.
+                if (minutesUntilStart is <= 5 and >= -1)
+                {
+                    // Unique key: day + time + label to avoid duplicate triggers
+                    string key = $"{todayName}_{block.Time}_{block.Label}";
+                    if (_alarmFiredKeys.Contains(key)) continue;
+
+                    _alarmFiredKeys.Add(key);
+                    _alarmService.StartAlarm();
+
+                    MainThread.BeginInvokeOnMainThread(() => IsAlarmActive = true);
+                    break; // only start one alarm at a time
+                }
+            }
+
+            // Keep IsAlarmActive in sync if the alarm was externally stopped.
+            if (!_alarmService.IsAlarmRinging && IsAlarmActive)
+            {
+                MainThread.BeginInvokeOnMainThread(() => IsAlarmActive = false);
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"[AlarmCheck] Error: {ex.Message}");
         }
     }
 
@@ -166,8 +265,11 @@ public partial class MainViewModel : ObservableObject, IRecipient<WeeklyTimetabl
     {
         if (message.Value)
         {
-            IsLoaded = false;
-            _ = LoadDataAsync();
+            MainThread.BeginInvokeOnMainThread(() => 
+            {
+                IsLoaded = false;
+                _ = LoadDataAsync();
+            });
         }
     }
 
@@ -218,6 +320,8 @@ public partial class MainViewModel : ObservableObject, IRecipient<WeeklyTimetabl
     private async Task ScheduleNotificationsAsync()
     {
         await _notificationService.CancelAllNotificationsAsync();
+        _alarmScheduler.CancelAll();
+
         bool hasPermission = await _notificationService.RequestPermissionsAsync();
 
         if (hasPermission)
@@ -250,7 +354,13 @@ public partial class MainViewModel : ObservableObject, IRecipient<WeeklyTimetabl
                             _notificationService.ScheduleNotificationAsync(
                                 "Upcoming Activity", 
                                 $"{block.Icon} {block.Label} starts in 5 minutes.", 
-                                startNotifyTime, notificationId++);
+                                startNotifyTime, notificationId);
+
+                            _alarmScheduler.ScheduleAlarm(
+                                notificationId++, 
+                                startNotifyTime, 
+                                "Activity Starting", 
+                                $"{block.Icon} {block.Label} starts in 5 minutes.");
                         }
 
                         // End alert 5 mins before
@@ -572,6 +682,9 @@ public partial class MainViewModel : ObservableObject, IRecipient<WeeklyTimetabl
         }
 
         block.IsCompleted = true;
+
+        if (Preferences.Get("haptic_enabled", true))
+            HapticFeedback.Default.Perform(HapticFeedbackType.Click);
         
         var list = _fullSchedule[ActiveDay];
         int index = list.IndexOf(block);

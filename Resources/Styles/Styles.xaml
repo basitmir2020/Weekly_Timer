@@ -7,25 +7,25 @@
     <Style TargetType="Label">
         <Setter Property="TextColor" Value="{StaticResource TextBody}" />
         <Setter Property="FontFamily" Value="OpenSansRegular" />
-        <Setter Property="FontSize" Value="14" />
+        <Setter Property="FontSize" Value="{DynamicResource BaseFontSize}" />
     </Style>
 
     <Style x:Key="H1" TargetType="Label">
         <Setter Property="TextColor" Value="{StaticResource TextHeading}" />
         <Setter Property="FontAttributes" Value="Bold" />
-        <Setter Property="FontSize" Value="28" />
+        <Setter Property="FontSize" Value="{DynamicResource HeroFontSize}" />
     </Style>
 
     <Style x:Key="H2" TargetType="Label">
         <Setter Property="TextColor" Value="{StaticResource TextHeading}" />
         <Setter Property="FontAttributes" Value="Bold" />
-        <Setter Property="FontSize" Value="20" />
+        <Setter Property="FontSize" Value="{DynamicResource HeaderFontSize}" />
     </Style>
     
     <Style x:Key="MonoLabel" TargetType="Label">
         <Setter Property="TextColor" Value="{StaticResource TextMuted}" />
         <Setter Property="FontFamily" Value="OpenSansRegular" /> <!-- Placeholder for DMMono -->
-        <Setter Property="FontSize" Value="11" />
+        <Setter Property="FontSize" Value="{DynamicResource SmallFontSize}" />
     </Style>
 
     <!-- Layout & Component Styles -->
