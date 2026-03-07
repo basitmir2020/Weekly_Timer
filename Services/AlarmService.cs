@@ -14,6 +14,8 @@ public sealed class AlarmService : IAlarmService
     private volatile bool _isRinging;
     private IAudioPlayer? _player;
     private IAudioPlayer? _warningPlayer;
+    private Stream? _alarmStream;
+    private Stream? _warningStream;
 
 #if ANDROID
     private Android.Media.MediaPlayer? _mediaPlayer;
@@ -48,6 +50,8 @@ public sealed class AlarmService : IAlarmService
         try { _player?.Stop(); }    catch { /* best effort */ }
         try { _player?.Dispose(); } catch { /* best effort */ }
         _player = null;
+        try { _alarmStream?.Dispose(); } catch { /* best effort */ }
+        _alarmStream = null;
 
 #if ANDROID
         // Stop Android MediaPlayer (primary path on Android)
@@ -134,7 +138,10 @@ public sealed class AlarmService : IAlarmService
         _warningMediaPlayer = null;
 #endif
         try { _warningPlayer?.Stop(); } catch { }
+        try { _warningPlayer?.Dispose(); } catch { }
         _warningPlayer = null;
+        try { _warningStream?.Dispose(); } catch { }
+        _warningStream = null;
     }
 
     /// <summary>Starts a looping warning sound.</summary>
@@ -153,13 +160,17 @@ public sealed class AlarmService : IAlarmService
                 try
                 {
                     string wavPath = await EnsureAlarmWavAsync();
-                    using var stream = File.OpenRead(wavPath);
-                    _warningPlayer = _audioManager.CreatePlayer(stream);
+                    _warningStream = File.OpenRead(wavPath);
+                    _warningPlayer = _audioManager.CreatePlayer(_warningStream);
                     _warningPlayer.Loop = true;
                     _warningPlayer.Volume = 0.5; // Lower volume for warning
                     _warningPlayer.Play();
                 }
-                catch { }
+                catch
+                {
+                    try { _warningStream?.Dispose(); } catch { }
+                    _warningStream = null;
+                }
             }
         });
     }
@@ -205,8 +216,8 @@ public sealed class AlarmService : IAlarmService
             try
             {
                 string wavPath = await EnsureAlarmWavAsync();
-                using var stream = File.OpenRead(wavPath);
-                _player = _audioManager.CreatePlayer(stream);
+                _alarmStream = File.OpenRead(wavPath);
+                _player = _audioManager.CreatePlayer(_alarmStream);
                 _player.Loop   = true;
                 _player.Volume = 1.0;
                 _player.Play();
@@ -214,6 +225,8 @@ public sealed class AlarmService : IAlarmService
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"[AlarmService] Audio fallback error: {ex.Message}");
+                try { _alarmStream?.Dispose(); } catch { }
+                _alarmStream = null;
             }
         }
 

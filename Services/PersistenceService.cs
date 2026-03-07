@@ -14,22 +14,20 @@ public class PersistenceService : IPersistenceService
     /// <remarks>
     /// Side effects: writes serialized JSON to preferences.
     /// </remarks>
-    public async Task SaveStateAsync<T>(string key, T data)
+    public Task SaveStateAsync<T>(string key, T data)
     {
         try
         {
-            await Task.Run(() => 
-            {
-                // Serialization and write happen off the calling thread to avoid UI stalls.
-                var json = JsonSerializer.Serialize(data);
-                Preferences.Default.Set(key, json);
-            });
+            var json = JsonSerializer.Serialize(data);
+            Preferences.Default.Set(key, json);
         }
         catch (Exception ex)
         {
             // Log or handle serialization/storage errors
             Console.WriteLine($"Error saving state for key {key}: {ex.Message}");
         }
+
+        return Task.CompletedTask;
     }
 
     /// <summary>
@@ -41,24 +39,21 @@ public class PersistenceService : IPersistenceService
     /// <remarks>
     /// Side effects: reads preferences storage and performs JSON deserialization.
     /// </remarks>
-    public async Task<T?> LoadStateAsync<T>(string key)
+    public Task<T?> LoadStateAsync<T>(string key)
     {
         try
         {
-            return await Task.Run(() => 
-            {
-                var json = Preferences.Default.Get<string?>(key, null);
-                if (string.IsNullOrEmpty(json))
-                    return default(T);
+            var json = Preferences.Default.Get<string?>(key, null);
+            if (string.IsNullOrEmpty(json))
+                return Task.FromResult<T?>(default);
 
-                return JsonSerializer.Deserialize<T>(json);
-            });
+            return Task.FromResult<T?>(JsonSerializer.Deserialize<T>(json));
         }
         catch (Exception ex)
         {
             // Log or handle deserialization errors (e.g., model changed)
             Console.WriteLine($"Error loading state for key {key}: {ex.Message}");
-            return default(T);
+            return Task.FromResult<T?>(default);
         }
     }
 

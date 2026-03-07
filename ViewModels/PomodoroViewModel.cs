@@ -13,7 +13,7 @@ public enum TimerMode
 
 public partial class PomodoroViewModel : ObservableObject
 {
-    private IDispatcherTimer _timer;
+    private readonly IDispatcherTimer _timer;
     
     [ObservableProperty]
     private int _secondsRemaining;
@@ -68,7 +68,9 @@ public partial class PomodoroViewModel : ObservableObject
     public PomodoroViewModel(Services.IAlarmService alarmService)
     {
         _alarmService = alarmService;
-        _timer = Application.Current.Dispatcher.CreateTimer();
+        var dispatcher = Application.Current?.Dispatcher ?? Dispatcher.GetForCurrentThread();
+        _timer = dispatcher?.CreateTimer()
+                 ?? throw new InvalidOperationException("No dispatcher is available for Pomodoro timer.");
         _timer.Interval = TimeSpan.FromSeconds(1);
         _timer.Tick += Timer_Tick;
         
@@ -259,7 +261,7 @@ public partial class PomodoroViewModel : ObservableObject
     /// <remarks>
     /// Side effects: mutates countdown state, triggers haptic feedback, and may change timer phase.
     /// </remarks>
-    private void Timer_Tick(object sender, EventArgs e)
+    private void Timer_Tick(object? sender, EventArgs e)
     {
         if (SecondsRemaining > 0)
         {

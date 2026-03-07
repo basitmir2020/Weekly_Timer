@@ -4,14 +4,11 @@ using CommunityToolkit.Maui.Core;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using WeeklyTimetable.Models;
-using WeeklyTimetable.Services;
 
 namespace WeeklyTimetable.ViewModels;
 
 public partial class EditBlockViewModel : ObservableObject
 {
-    private readonly IDatabaseService _db;
-    private readonly string _dayName;
     private readonly ScheduleBlock? _existingBlock;
     private readonly List<ScheduleBlock> _currentDayBlocks;
     
@@ -24,6 +21,7 @@ public partial class EditBlockViewModel : ObservableObject
     [ObservableProperty] private string _icon = "📌";
     [ObservableProperty] private string _category = "routine";
     [ObservableProperty] private int _durationMinutes = 30;
+    [ObservableProperty] private string _notes = string.Empty;
 
     public List<string> Categories { get; } = new()
     {
@@ -36,17 +34,13 @@ public partial class EditBlockViewModel : ObservableObject
     /// <summary>
     /// Creates a view model for adding or editing a schedule block for a specific day.
     /// </summary>
-    /// <param name="db">Database service (reserved for future persistence enhancements).</param>
-    /// <param name="dayName">Day label the block belongs to.</param>
     /// <param name="existing">Existing block when editing; <c>null</c> for create mode.</param>
     /// <param name="currentDayBlocks">Current day block list used to build time options.</param>
     /// <remarks>
     /// Side effects: initializes editable properties and prepopulates selectable time options.
     /// </remarks>
-    public EditBlockViewModel(IDatabaseService db, string dayName, ScheduleBlock? existing = null, List<ScheduleBlock>? currentDayBlocks = null)
+    public EditBlockViewModel(ScheduleBlock? existing = null, List<ScheduleBlock>? currentDayBlocks = null)
     {
-        _db = db;
-        _dayName = dayName;
         _existingBlock = existing;
         _currentDayBlocks = currentDayBlocks ?? new List<ScheduleBlock>();
 
@@ -60,6 +54,7 @@ public partial class EditBlockViewModel : ObservableObject
             Icon               = existing.Icon;
             Category           = existing.Category;
             DurationMinutes    = existing.DurationMinutes;
+            Notes              = existing.Notes ?? string.Empty;
         }
         else if (AvailableTimes.Any())
         {
@@ -118,6 +113,7 @@ public partial class EditBlockViewModel : ObservableObject
         block.Icon            = Icon;
         block.Category        = Category;
         block.DurationMinutes = DurationMinutes;
+        block.Notes           = Notes;
 
         bool isNew = _existingBlock == null;
         OnSaved?.Invoke(block, isNew);

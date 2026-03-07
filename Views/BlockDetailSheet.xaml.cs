@@ -1,7 +1,6 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using WeeklyTimetable.Models;
-using WeeklyTimetable.Services;
 
 namespace WeeklyTimetable.Views;
 
@@ -11,18 +10,15 @@ public partial class BlockDetailSheet : ContentPage
     /// Initializes block detail sheet and binds the detail view model for the selected block.
     /// </summary>
     /// <param name="block">Schedule block whose details are being viewed/edited.</param>
-    /// <param name="db">Database service dependency for persistence workflows.</param>
-    public BlockDetailSheet(ScheduleBlock block, IDatabaseService db)
+    public BlockDetailSheet(ScheduleBlock block)
     {
         InitializeComponent();
-        BindingContext = new BlockDetailViewModel(block, db);
+        BindingContext = new BlockDetailViewModel(block);
     }
 }
 
 public partial class BlockDetailViewModel : ObservableObject
 {
-    private readonly IDatabaseService _db;
-
     [ObservableProperty] public ScheduleBlock _block;
     [ObservableProperty] public string _notes = string.Empty;
 
@@ -30,14 +26,12 @@ public partial class BlockDetailViewModel : ObservableObject
     /// Creates a detail editor view model for one schedule block.
     /// </summary>
     /// <param name="block">Target schedule block instance.</param>
-    /// <param name="db">Database service dependency.</param>
     /// <remarks>
     /// Side effects: initializes editable notes from the block.
     /// </remarks>
-    public BlockDetailViewModel(ScheduleBlock block, IDatabaseService db)
+    public BlockDetailViewModel(ScheduleBlock block)
     {
         _block = block;
-        _db    = db;
         Notes  = block.Notes ?? string.Empty;
     }
 

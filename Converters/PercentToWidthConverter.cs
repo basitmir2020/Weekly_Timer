@@ -12,7 +12,7 @@ public class PercentToWidthConverter : IValueConverter
     /// <param name="parameter">Optional converter parameter (unused).</param>
     /// <param name="culture">Culture info for conversion.</param>
     /// <returns>Scaled width value.</returns>
-    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
         double maxW = 35.0; // Based on the UI WidthRequest=35
         if (value is int pct)
@@ -31,7 +31,7 @@ public class PercentToWidthConverter : IValueConverter
     /// <param name="culture">Culture info.</param>
     /// <returns>Never returns; always throws.</returns>
     /// <exception cref="NotImplementedException">Always thrown for one-way conversion.</exception>
-    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
         throw new NotImplementedException();
     }

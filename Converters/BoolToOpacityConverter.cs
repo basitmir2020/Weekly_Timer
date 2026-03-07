@@ -12,7 +12,7 @@ public class BoolToOpacityConverter : IValueConverter
     /// <param name="parameter">Optional converter parameter (unused).</param>
     /// <param name="culture">Culture info for conversion.</param>
     /// <returns><c>0.45</c> for completed items; otherwise <c>1.0</c>.</returns>
-    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
         if (value is bool isCompleted && isCompleted)
         {
@@ -30,7 +30,7 @@ public class BoolToOpacityConverter : IValueConverter
     /// <param name="culture">Culture info.</param>
     /// <returns>Never returns; always throws.</returns>
     /// <exception cref="NotImplementedException">Always thrown for one-way conversion.</exception>
-    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
         throw new NotImplementedException();
     }

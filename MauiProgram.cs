@@ -66,8 +66,6 @@ public static class MauiProgram
         builder.Services.AddTransient<GoalsViewModel>();
         builder.Services.AddTransient<ProfileViewModel>();
         builder.Services.AddSingleton<SettingsViewModel>();
-        builder.Services.AddTransient<EditBlockViewModel>();
-        builder.Services.AddTransient<BlockDetailViewModel>();
 
         // ── Views / Pages ─────────────────────────────────────────
         builder.Services.AddTransient<MainPage>();

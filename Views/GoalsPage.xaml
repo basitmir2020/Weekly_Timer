@@ -4,6 +4,7 @@
              xmlns:vm="clr-namespace:WeeklyTimetable.ViewModels"
              xmlns:converters="clr-namespace:WeeklyTimetable.Converters"
              x:Class="WeeklyTimetable.Views.GoalsPage"
+             x:DataType="vm:GoalsViewModel"
              BackgroundColor="{AppThemeBinding Light={StaticResource BgPageLight}, Dark={StaticResource BgPageDark}}"
              Title="Weekly Goals">
 

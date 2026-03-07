@@ -8,6 +8,7 @@ namespace WeeklyTimetable.ViewModels;
 public partial class GoalsViewModel : ObservableObject
 {
     private readonly IDatabaseService _databaseService;
+    private bool _isLoaded;
 
     [ObservableProperty] private string _dsaTopic = string.Empty;
     [ObservableProperty] private string _webDevFeature = string.Empty;
@@ -28,8 +29,9 @@ public partial class GoalsViewModel : ObservableObject
     public GoalsViewModel(IDatabaseService databaseService)
     {
         _databaseService = databaseService;
-        _ = LoadAsync();
     }
+
+    public Task EnsureLoadedAsync() => LoadAsync(forceReload: false);
 
     /// <summary>
     /// Loads the current week's goal record and maps persisted values into bindable properties.
@@ -38,8 +40,11 @@ public partial class GoalsViewModel : ObservableObject
     /// <remarks>
     /// Side effects: updates goal text and completion flag properties.
     /// </remarks>
-    private async Task LoadAsync()
+    private async Task LoadAsync(bool forceReload)
     {
+        if (_isLoaded && !forceReload)
+            return;
+
         try
         {
             var goal = await _databaseService.GetWeeklyGoalAsync(WeekStart);
@@ -52,6 +57,8 @@ public partial class GoalsViewModel : ObservableObject
                 WebDevDone     = goal.WebDevDone;
                 HabitDone      = goal.HabitDone;
             }
+
+            _isLoaded = true;
         }
         catch (Exception ex)
         {
@@ -80,6 +87,7 @@ public partial class GoalsViewModel : ObservableObject
             HabitDone     = HabitDone
         };
         await _databaseService.SaveWeeklyGoalAsync(goal);
+        _isLoaded = true;
     }
 
     /// <summary>

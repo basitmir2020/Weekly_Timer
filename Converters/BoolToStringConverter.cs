@@ -15,7 +15,7 @@ public class BoolToStringConverter : IValueConverter
     /// <param name="parameter">Optional text override in format <c>TrueText|FalseText</c>.</param>
     /// <param name="culture">Culture info for conversion.</param>
     /// <returns>Configured true/false string result.</returns>
-    public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+    public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
         string trueStr = TrueString;
         string falseStr = FalseString;
@@ -47,7 +47,7 @@ public class BoolToStringConverter : IValueConverter
     /// <param name="culture">Culture info.</param>
     /// <returns>Never returns; always throws.</returns>
     /// <exception cref="NotImplementedException">Always thrown for one-way conversion.</exception>
-    public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
+    public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
         throw new NotImplementedException();
     }

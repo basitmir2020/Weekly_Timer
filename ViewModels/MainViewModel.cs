@@ -6,7 +6,6 @@ using CommunityToolkit.Mvvm.Input;
 using WeeklyTimetable.Models;
 using WeeklyTimetable.Services;
 using WeeklyTimetable.Data;
-
 using CommunityToolkit.Mvvm.Messaging;
 
 namespace WeeklyTimetable.ViewModels;
@@ -18,11 +17,11 @@ public partial class MainViewModel : ObservableObject, IRecipient<WeeklyTimetabl
     private static readonly string[] OrderedDays = { "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday" };
 
     private readonly IPersistenceService _persistenceService;
-    private readonly IDatabaseService _databaseService;
     private readonly IStreakService _streakService;
     private readonly INotificationService _notificationService;
     private readonly IAlarmService _alarmService;
     private readonly IAlarmSchedulerService _alarmScheduler;
+    private readonly SemaphoreSlim _loadGate = new(1, 1);
 
     // Foreground alarm-check timer — fires every 30 s while the app is running.
     private System.Threading.Timer? _alarmCheckTimer;
@@ -30,9 +29,6 @@ public partial class MainViewModel : ObservableObject, IRecipient<WeeklyTimetabl
     private readonly HashSet<string> _alarmFiredKeys = new();
 
     private Dictionary<string, List<ScheduleBlock>> _fullSchedule = new();
-    
-    // DayName__index -> bool
-    private Dictionary<string, bool> _completedState = new();
 
     [ObservableProperty]
     private string _activeDay;
@@ -70,17 +66,15 @@ public partial class MainViewModel : ObservableObject, IRecipient<WeeklyTimetabl
     /// Creates the main schedule view model and wires up dependencies for persistence, streaks, notifications, and alarm.
     /// </summary>
     /// <param name="persistenceService">Service used to save and load schedule state.</param>
-    /// <param name="databaseService">Service used by detail/edit flows for data access.</param>
     /// <param name="streakService">Service used to compute and store streak progress.</param>
     /// <param name="notificationService">Service used to schedule reminder notifications.</param>
     /// <param name="alarmService">Service used to start/stop the looping in-app alarm.</param>
     /// <remarks>
     /// Side effects: registers this instance with the weak-reference messenger for schedule refresh events.
     /// </remarks>
-    public MainViewModel(IPersistenceService persistenceService, IDatabaseService databaseService, IStreakService streakService, INotificationService notificationService, IAlarmService alarmService, IAlarmSchedulerService alarmScheduler)
+    public MainViewModel(IPersistenceService persistenceService, IStreakService streakService, INotificationService notificationService, IAlarmService alarmService, IAlarmSchedulerService alarmScheduler)
     {
         _persistenceService = persistenceService;
-        _databaseService = databaseService;
         _streakService = streakService;
         _notificationService = notificationService;
         _alarmService = alarmService;
@@ -101,10 +95,15 @@ public partial class MainViewModel : ObservableObject, IRecipient<WeeklyTimetabl
     /// </remarks>
     public async Task LoadDataAsync()
     {
-        if (IsLoaded) return;
-        
+        if (IsLoaded)
+            return;
+
+        await _loadGate.WaitAsync();
         try
         {
+            if (IsLoaded)
+                return;
+
             // 1. Load full custom schedule if exists
             var customSchedule = await _persistenceService.LoadStateAsync<Dictionary<string, List<ScheduleBlock>>>(STATE_KEY_V3);
             if (customSchedule != null && customSchedule.Count > 0)
@@ -120,8 +119,6 @@ public partial class MainViewModel : ObservableObject, IRecipient<WeeklyTimetabl
                 var state = await _persistenceService.LoadStateAsync<Dictionary<string, bool>>(STATE_KEY);
                 if (state != null)
                 {
-                    _completedState = state;
-                    
                     // Map state onto blocks
                     foreach (var kvp in _fullSchedule)
                     {
@@ -131,7 +128,7 @@ public partial class MainViewModel : ObservableObject, IRecipient<WeeklyTimetabl
                         for (int i = 0; i < blocks.Count; i++)
                         {
                             string stateKey = $"{dayName}__{i}";
-                            blocks[i].IsCompleted = _completedState.ContainsKey(stateKey) && _completedState[stateKey];
+                            blocks[i].IsCompleted = state.ContainsKey(stateKey) && state[stateKey];
                         }
                     }
                 }
@@ -161,6 +158,7 @@ public partial class MainViewModel : ObservableObject, IRecipient<WeeklyTimetabl
             _ = SafeScheduleNotificationsAsync();
 
             // 7. Start foreground alarm-check timer (fires every 30 s)
+            _alarmFiredKeys.Clear();
             StartAlarmCheckTimer();
             
             IsLoaded = true;
@@ -168,6 +166,10 @@ public partial class MainViewModel : ObservableObject, IRecipient<WeeklyTimetabl
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"Error during MainViewModel initialization: {ex.Message}");
+        }
+        finally
+        {
+            _loadGate.Release();
         }
     }
 
@@ -284,7 +286,7 @@ public partial class MainViewModel : ObservableObject, IRecipient<WeeklyTimetabl
     {
         try
         {
-            await Task.Run(async () => await ScheduleNotificationsAsync());
+            await ScheduleNotificationsAsync().ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -319,6 +321,13 @@ public partial class MainViewModel : ObservableObject, IRecipient<WeeklyTimetabl
     /// </remarks>
     private async Task ScheduleNotificationsAsync()
     {
+        if (!Preferences.Get("notif_enabled", true))
+        {
+            await _notificationService.CancelAllNotificationsAsync();
+            _alarmScheduler.CancelAll();
+            return;
+        }
+
         await _notificationService.CancelAllNotificationsAsync();
         _alarmScheduler.CancelAll();
 
@@ -327,6 +336,7 @@ public partial class MainViewModel : ObservableObject, IRecipient<WeeklyTimetabl
         if (hasPermission)
         {
             DateTime now = DateTime.Now;
+            DateTime horizon = now.AddDays(7);
             int notificationId = 1000;
             
             var today = DateTime.Today;
@@ -349,9 +359,9 @@ public partial class MainViewModel : ObservableObject, IRecipient<WeeklyTimetabl
 
                         // Start alert 5 mins before
                         var startNotifyTime = blockStartDateTime.AddMinutes(-5);
-                        if (startNotifyTime > now && startNotifyTime < now.AddDays(7))
+                        if (startNotifyTime > now && startNotifyTime < horizon)
                         {
-                            _notificationService.ScheduleNotificationAsync(
+                            await _notificationService.ScheduleNotificationAsync(
                                 "Upcoming Activity", 
                                 $"{block.Icon} {block.Label} starts in 5 minutes.", 
                                 startNotifyTime, notificationId);
@@ -365,9 +375,9 @@ public partial class MainViewModel : ObservableObject, IRecipient<WeeklyTimetabl
 
                         // End alert 5 mins before
                         var endNotifyTime = blockEndDateTime.AddMinutes(-5);
-                        if (endNotifyTime > now && endNotifyTime < now.AddDays(7))
+                        if (endNotifyTime > now && endNotifyTime < horizon)
                         {
-                            _notificationService.ScheduleNotificationAsync(
+                            await _notificationService.ScheduleNotificationAsync(
                                 "Wrap Up", 
                                 $"{block.Icon} {block.Label} ends in 5 minutes. Wrap up!", 
                                 endNotifyTime, notificationId++);
@@ -539,7 +549,7 @@ public partial class MainViewModel : ObservableObject, IRecipient<WeeklyTimetabl
     private async Task OpenBlockDetailAsync(ScheduleBlock block)
     {
         if (block == null) return;
-        var page = new Views.BlockDetailSheet(block, _databaseService);
+        var page = new Views.BlockDetailSheet(block);
         await Shell.Current.Navigation.PushModalAsync(page);
     }
 
@@ -554,7 +564,7 @@ public partial class MainViewModel : ObservableObject, IRecipient<WeeklyTimetabl
     private async Task AddBlockAsync()
     {
         var currentBlocks = _fullSchedule.ContainsKey(ActiveDay) ? _fullSchedule[ActiveDay] : new List<ScheduleBlock>();
-        var vm = new ViewModels.EditBlockViewModel(_databaseService, ActiveDay, currentDayBlocks: currentBlocks);
+        var vm = new ViewModels.EditBlockViewModel(currentDayBlocks: currentBlocks);
         
         vm.OnSaved = (block, isNew) =>
         {
@@ -562,20 +572,9 @@ public partial class MainViewModel : ObservableObject, IRecipient<WeeklyTimetabl
             {
                 var targetList = _fullSchedule[ActiveDay];
                 targetList.Add(block);
-                
+
                 // Sort chronologically by time
-                targetList.Sort((a, b) => 
-                {
-                    // Invalid times are intentionally pushed after valid times to keep a predictable order.
-                    TimeSpan tempA, tempB;
-                    bool aValid = TimeSpan.TryParse(a.Time, out tempA);
-                    bool bValid = TimeSpan.TryParse(b.Time, out tempB);
-                    
-                    if (aValid && bValid) return tempA.CompareTo(tempB);
-                    if (aValid) return -1;
-                    if (bValid) return 1;
-                    return 0;
-                });
+                targetList.Sort(CompareBlocksByTime);
                 
                 // Force UI to pick up the brand new list ordering
                 _fullSchedule[ActiveDay] = new List<ScheduleBlock>(targetList);
@@ -588,7 +587,7 @@ public partial class MainViewModel : ObservableObject, IRecipient<WeeklyTimetabl
             }
         };
 
-        var page = new Views.EditBlockPage(_databaseService) { BindingContext = vm };
+        var page = new Views.EditBlockPage { BindingContext = vm };
         await Shell.Current.Navigation.PushAsync(page);
     }
 
@@ -792,11 +791,23 @@ public partial class MainViewModel : ObservableObject, IRecipient<WeeklyTimetabl
             }
         }
     }
+
+    private static int CompareBlocksByTime(ScheduleBlock a, ScheduleBlock b)
+    {
+        // Invalid times are intentionally pushed after valid times to keep a predictable order.
+        bool aValid = TimeSpan.TryParse(a.Time, out var aTime);
+        bool bValid = TimeSpan.TryParse(b.Time, out var bTime);
+
+        if (aValid && bValid) return aTime.CompareTo(bTime);
+        if (aValid) return -1;
+        if (bValid) return 1;
+        return 0;
+    }
 }
 
 public class CategoryStat
 {
-    public string Key { get; set; }
+    public string Key { get; set; } = string.Empty;
     public int Count { get; set; }
     public string DisplayText => $"{Key.ToUpper()} ({Count})";
 }

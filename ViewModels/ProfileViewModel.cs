@@ -9,6 +9,7 @@ namespace WeeklyTimetable.ViewModels;
 public partial class ProfileViewModel : ObservableObject
 {
     private readonly IProfileService _profileService;
+    private bool _isLoaded;
 
     [ObservableProperty] private ObservableCollection<ScheduleProfile> _profiles = new();
     [ObservableProperty] private ScheduleProfile? _activeProfile;
@@ -23,8 +24,9 @@ public partial class ProfileViewModel : ObservableObject
     public ProfileViewModel(IProfileService profileService)
     {
         _profileService = profileService;
-        _ = LoadAsync();
     }
+
+    public Task EnsureLoadedAsync() => LoadAsync(forceReload: false);
 
     /// <summary>
     /// Loads all profiles and resolves the currently active profile.
@@ -33,12 +35,16 @@ public partial class ProfileViewModel : ObservableObject
     /// <remarks>
     /// Side effects: clears and repopulates <see cref="Profiles"/> and updates <see cref="ActiveProfile"/>.
     /// </remarks>
-    private async Task LoadAsync()
+    private async Task LoadAsync(bool forceReload)
     {
+        if (_isLoaded && !forceReload)
+            return;
+
         var all = await _profileService.GetAllProfilesAsync();
         Profiles.Clear();
         foreach (var p in all) Profiles.Add(p);
         ActiveProfile = Profiles.FirstOrDefault(p => p.IsActive);
+        _isLoaded = true;
     }
 
     /// <summary>

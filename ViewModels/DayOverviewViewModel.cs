@@ -5,10 +5,10 @@ namespace WeeklyTimetable.ViewModels;
 public partial class DayOverviewViewModel : ObservableObject
 {
     [ObservableProperty]
-    private string _dayName;
+    private string _dayName = string.Empty;
 
     [ObservableProperty]
-    private string _dayAbbreviation;
+    private string _dayAbbreviation = string.Empty;
     
     [ObservableProperty]
     private int _totalBlocks;

@@ -10,6 +10,7 @@ public partial class AnalyticsViewModel : ObservableObject
 {
     private readonly IStreakService _streakService;
     private readonly IDatabaseService _databaseService;
+    private bool _isLoaded;
 
     [ObservableProperty] private int _currentStreak;
     [ObservableProperty] private int _longestStreak;
@@ -37,8 +38,9 @@ public partial class AnalyticsViewModel : ObservableObject
     {
         _streakService  = streakService;
         _databaseService = databaseService;
-        _ = LoadAsync();
     }
+
+    public Task EnsureLoadedAsync() => LoadCoreAsync(forceRefresh: false);
 
     /// <summary>
     /// Loads analytics data for streak cards, heatmap, mood trend, and weekly goal summary.
@@ -48,8 +50,19 @@ public partial class AnalyticsViewModel : ObservableObject
     /// Side effects: clears and repopulates observable collections and toggles <see cref="IsLoading"/>.
     /// </remarks>
     [RelayCommand]
-    private async Task LoadAsync()
+    private Task LoadAsync()
     {
+        return LoadCoreAsync(forceRefresh: true);
+    }
+
+    private async Task LoadCoreAsync(bool forceRefresh)
+    {
+        if (IsLoading)
+            return;
+
+        if (_isLoaded && !forceRefresh)
+            return;
+
         IsLoading = true;
         try
         {
@@ -90,6 +103,7 @@ public partial class AnalyticsViewModel : ObservableObject
             TotalCompleteDays = streakRecords.Count(s => s.IsComplete);
             
             await LoadWeeklyGoalsAsync();
+            _isLoaded = true;
         }
         finally { IsLoading = false; }
     }

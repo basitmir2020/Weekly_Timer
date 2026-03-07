@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8" ?>
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:WeeklyTimetable.ViewModels"
              x:Class="WeeklyTimetable.Views.SettingsPage"
+             x:DataType="vm:SettingsViewModel"
              BackgroundColor="{AppThemeBinding Light={StaticResource BgPageLight}, Dark={StaticResource BgPageDark}}"
              Title="Settings">
 
@@ -32,9 +34,9 @@
                         <Picker Grid.Column="1" ItemsSource="{Binding DaysOfWeek}" SelectedItem="{Binding SelectedDay}" TextColor="{StaticResource AccentPurple}" />
                     </Grid>
 
-                    <CollectionView ItemsSource="{Binding DayBlocks}" HeightRequest="400">
+                    <CollectionView ItemsSource="{Binding DayBlocks}" HeightRequest="400" ItemSizingStrategy="MeasureFirstItem" SelectionMode="None">
                         <CollectionView.ItemTemplate>
-                            <DataTemplate>
+                            <DataTemplate x:DataType="vm:TemplateBlockEditor">
                                 <Grid ColumnDefinitions="Auto, *, Auto" Margin="0, 4" Padding="0, 8">
                                     <Label Grid.Column="0" Text="{Binding Icon}" FontSize="20" VerticalOptions="Center" Margin="0,0,12,0"/>
                                     <VerticalStackLayout Grid.Column="1" VerticalOptions="Center">
@@ -91,8 +93,8 @@
             <Label Text="Cloud Backup" Style="{StaticResource MonoLabel}" Margin="0,12,0,4" />
             <Border Style="{StaticResource CardStyle}">
                 <VerticalStackLayout Spacing="16">
-                    <Entry Placeholder="Email" Text="{Binding SupabaseEmail}" Keyboard="Email" TextColor="{StaticResource TextHeading}" />
-                    <Entry Placeholder="Password" Text="{Binding SupabasePassword}" IsPassword="True" TextColor="{StaticResource TextHeading}" />
+                    <Entry Placeholder="Email" Text="{Binding SupabaseEmail}" Keyboard="Email" TextColor="{AppThemeBinding Light={StaticResource TextHeadingLight}, Dark={StaticResource TextHeadingDark}}" />
+                    <Entry Placeholder="Password" Text="{Binding SupabasePassword}" IsPassword="True" TextColor="{AppThemeBinding Light={StaticResource TextHeadingLight}, Dark={StaticResource TextHeadingDark}}" />
                     <HorizontalStackLayout Spacing="12">
                         <Button Text="☁️ Backup" Command="{Binding BackupCommand}" BackgroundColor="{StaticResource AccentPurple}" TextColor="{AppThemeBinding Light={StaticResource BgPageLight}, Dark={StaticResource BgPageDark}}" CornerRadius="8" />
                         <Button Text="📥 Restore" Command="{Binding RestoreCommand}" BackgroundColor="Transparent" TextColor="{StaticResource SuccessGreen}" BorderColor="{StaticResource SuccessGreen}" BorderWidth="1" CornerRadius="8" />

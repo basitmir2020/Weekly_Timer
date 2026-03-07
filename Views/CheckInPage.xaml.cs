@@ -9,4 +9,13 @@ public partial class CheckInPage : ContentPage
     /// </summary>
     /// <param name="vm">Check-in view model for mood/energy journaling.</param>
     public CheckInPage(CheckInViewModel vm) { InitializeComponent(); BindingContext = vm; }
+
+    protected override async void OnAppearing()
+    {
+        base.OnAppearing();
+        if (BindingContext is CheckInViewModel vm)
+        {
+            await vm.EnsureLoadedAsync();
+        }
+    }
 }

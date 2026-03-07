@@ -1,8 +1,4 @@
 using Supabase;
-using Microsoft.Maui.Storage;
-using System.Text.Json;
-using System.Threading.Tasks;
-using WeeklyTimetable.Models;
 
 namespace WeeklyTimetable.Services;
 
@@ -36,16 +32,16 @@ public interface ISupabaseSyncService
 
 public class SupabaseSyncService : ISupabaseSyncService
 {
+    private const string ScheduleStateKey = "sched_v3";
+    private const string LegacyScheduleStateKey = "sched_v2";
+
     private Client? _client;
-    private readonly IDatabaseService _db;
 
     /// <summary>
     /// Creates the Supabase sync service.
     /// </summary>
-    /// <param name="db">Database service dependency (reserved for extended sync scenarios).</param>
-    public SupabaseSyncService(IDatabaseService db)
+    public SupabaseSyncService()
     {
-        _db = db;
     }
 
     /// <summary>
@@ -94,16 +90,18 @@ public class SupabaseSyncService : ISupabaseSyncService
     public async Task<bool> BackupDataAsync()
     {
         if (_client?.Auth.CurrentUser == null) return false;
+        var userId = _client.Auth.CurrentUser.Id;
+        if (string.IsNullOrWhiteSpace(userId)) return false;
 
         try
         {
-            // Serialize local preferences (sched_v2) 
-            string schedData = Preferences.Get("sched_v2", "{}");
+            // Serialize local preferences from current key, with legacy fallback.
+            string schedData = Preferences.Get(ScheduleStateKey, Preferences.Get(LegacyScheduleStateKey, "{}"));
 
             // Assuming a table 'user_backups' with columns 'user_id', 'sched_json'
             var backup = new UserBackup
             {
-                UserId = _client.Auth.CurrentUser.Id,
+                UserId = userId,
                 SchedJson = schedData,
                 UpdatedAt = DateTime.UtcNow
             };
@@ -127,16 +125,19 @@ public class SupabaseSyncService : ISupabaseSyncService
     public async Task<bool> RestoreDataAsync()
     {
         if (_client?.Auth.CurrentUser == null) return false;
+        var userId = _client.Auth.CurrentUser.Id;
+        if (string.IsNullOrWhiteSpace(userId)) return false;
 
         try
         {
             var response = await _client.From<UserBackup>()
-                                        .Where(b => b.UserId == _client.Auth.CurrentUser.Id)
+                                        .Where(b => b.UserId == userId)
                                         .Single();
 
             if (response != null && !string.IsNullOrEmpty(response.SchedJson))
             {
-                Preferences.Set("sched_v2", response.SchedJson);
+                Preferences.Set(ScheduleStateKey, response.SchedJson);
+                Preferences.Set(LegacyScheduleStateKey, response.SchedJson);
                 return true;
             }
             return false;

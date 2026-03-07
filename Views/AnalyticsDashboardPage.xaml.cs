@@ -9,4 +9,13 @@ public partial class AnalyticsDashboardPage : ContentPage
     /// </summary>
     /// <param name="vm">Analytics view model providing dashboard data.</param>
     public AnalyticsDashboardPage(AnalyticsViewModel vm) { InitializeComponent(); BindingContext = vm; }
+
+    protected override async void OnAppearing()
+    {
+        base.OnAppearing();
+        if (BindingContext is AnalyticsViewModel vm)
+        {
+            await vm.EnsureLoadedAsync();
+        }
+    }
 }

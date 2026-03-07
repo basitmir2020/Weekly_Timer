@@ -3,9 +3,11 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:local="clr-namespace:WeeklyTimetable.Views"
              xmlns:vm="clr-namespace:WeeklyTimetable.ViewModels"
+             xmlns:models="clr-namespace:WeeklyTimetable.Models"
              xmlns:converters="clr-namespace:WeeklyTimetable.Converters"
              xmlns:controls="clr-namespace:WeeklyTimetable.Controls"
              x:Class="WeeklyTimetable.Views.MainPage"
+             x:DataType="vm:MainViewModel"
              BackgroundColor="{AppThemeBinding Light={StaticResource BgPageLight}, Dark={StaticResource BgPageDark}}">
 
     <ContentPage.Resources>
@@ -38,12 +40,12 @@
                 </HorizontalStackLayout>
                 
                 <!-- 7 Mini Progress Bars Header (Bind to WeekStats) -->
-                <CollectionView ItemsSource="{Binding WeekStats}" HeightRequest="40">
+                <CollectionView ItemsSource="{Binding WeekStats}" HeightRequest="40" ItemSizingStrategy="MeasureFirstItem" SelectionMode="None">
                     <CollectionView.ItemsLayout>
                         <LinearItemsLayout Orientation="Horizontal" ItemSpacing="8" />
                     </CollectionView.ItemsLayout>
                     <CollectionView.ItemTemplate>
-                        <DataTemplate>
+                        <DataTemplate x:DataType="vm:DayOverviewViewModel">
                             <VerticalStackLayout Spacing="4" Opacity="0.8">
                                 <VerticalStackLayout.GestureRecognizers>
                                     <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type vm:MainViewModel}}, Path=SwitchDayCommand}" CommandParameter="{Binding DayName}" />
@@ -157,7 +159,7 @@
                 <ScrollView Orientation="Horizontal" HorizontalScrollBarVisibility="Never">
                     <HorizontalStackLayout Spacing="8" BindableLayout.ItemsSource="{Binding ActiveCategories}">
                         <BindableLayout.ItemTemplate>
-                            <DataTemplate>
+                            <DataTemplate x:DataType="vm:CategoryStat">
                                 <Border Style="{StaticResource PillStyle}">
                                     <Border.GestureRecognizers>
                                         <TapGestureRecognizer Command="{Binding Source={RelativeSource AncestorType={x:Type vm:MainViewModel}}, Path=SetFilterCommand}" CommandParameter="{Binding Key}" />
@@ -170,9 +172,9 @@
                 </ScrollView>
 
                 <!-- Schedule Blocks -->
-                <CollectionView x:Name="BlocksCollection" ItemsSource="{Binding FilteredBlocks}">
+                <CollectionView x:Name="BlocksCollection" ItemsSource="{Binding FilteredBlocks}" ItemSizingStrategy="MeasureFirstItem" SelectionMode="None">
                     <CollectionView.ItemTemplate>
-                        <DataTemplate>
+                        <DataTemplate x:DataType="models:ScheduleBlock">
                             <Grid ColumnDefinitions="58, 20, *" Margin="0, 0, 0, 12"
                                   Opacity="{Binding IsCompleted, Converter={StaticResource BoolToOpacityConverter}}">
                                 
@@ -185,7 +187,7 @@
                                 <!-- Dot Connector -->
                                 <Grid Grid.Column="1" RowDefinitions="Auto, *" HorizontalOptions="Center">
                                     <Border Grid.Row="0" WidthRequest="12" HeightRequest="12" StrokeShape="RoundRectangle 6" BackgroundColor="Transparent" Stroke="{StaticResource AccentPurple}" StrokeThickness="2" />
-                                    <BoxView Grid.Row="1" WidthRequest="2" Color="{StaticResource BorderLight}" HorizontalOptions="Center" Margin="0,4,0,0" />
+                                    <BoxView Grid.Row="1" WidthRequest="2" Color="{AppThemeBinding Light={StaticResource BorderLightLight}, Dark={StaticResource BorderLightDark}}" HorizontalOptions="Center" Margin="0,4,0,0" />
                                 </Grid>
 
                                 <!-- Card — tap to complete, long-press to edit (spec §8.14) -->

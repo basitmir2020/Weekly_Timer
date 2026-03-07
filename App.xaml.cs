@@ -4,17 +4,21 @@ namespace WeeklyTimetable;
 
 public partial class App : Application
 {
+    private readonly IServiceProvider _services;
+
     public App(IServiceProvider services)
     {
         InitializeComponent();
-        MainPage = services.GetRequiredService<AppShell>();
-    }
+        _services = services;
 
-    protected override void OnStart()
-    {
-        base.OnStart();
         ApplyStartupTheme();
         ApplyInitialFontSize();
+    }
+
+    protected override Window CreateWindow(IActivationState? activationState)
+    {
+        var shell = _services.GetRequiredService<AppShell>();
+        return new Window(shell);
     }
 
     private void ApplyStartupTheme()

@@ -8,6 +8,7 @@ namespace WeeklyTimetable.ViewModels;
 public partial class CheckInViewModel : ObservableObject
 {
     private readonly IDatabaseService _databaseService;
+    private bool _isLoaded;
 
     [ObservableProperty] private int _morningEnergy = 3;
     [ObservableProperty] private int _eveningMood = 3;
@@ -26,8 +27,9 @@ public partial class CheckInViewModel : ObservableObject
     {
         _databaseService = databaseService;
         IsMorning = DateTime.Now.Hour < 12;
-        _ = LoadTodayAsync();
     }
+
+    public Task EnsureLoadedAsync() => LoadTodayAsync(forceReload: false);
 
     /// <summary>
     /// Loads today's check-in entry and hydrates the form if data already exists.
@@ -36,8 +38,11 @@ public partial class CheckInViewModel : ObservableObject
     /// <remarks>
     /// Side effects: updates energy, mood, notes, and saved-state properties.
     /// </remarks>
-    private async Task LoadTodayAsync()
+    private async Task LoadTodayAsync(bool forceReload)
     {
+        if (_isLoaded && !forceReload)
+            return;
+
         var existing = await _databaseService.GetCheckInAsync(DateTime.Today);
         if (existing != null)
         {
@@ -46,6 +51,8 @@ public partial class CheckInViewModel : ObservableObject
             Notes         = existing.Notes ?? string.Empty;
             IsSaved       = true;
         }
+
+        _isLoaded = true;
     }
 
     /// <summary>
@@ -67,5 +74,6 @@ public partial class CheckInViewModel : ObservableObject
         };
         await _databaseService.SaveCheckInAsync(record);
         IsSaved = true;
+        _isLoaded = true;
     }
 }

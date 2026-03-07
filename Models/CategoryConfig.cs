@@ -2,9 +2,9 @@ namespace WeeklyTimetable.Models;
 
 public class CategoryConfig
 {
-    public string Key { get; set; }
-    public string Label { get; set; }
-    public string AccentColor { get; set; }
+    public string Key { get; set; } = string.Empty;
+    public string Label { get; set; } = string.Empty;
+    public string AccentColor { get; set; } = string.Empty;
 }
 
 public static class CategoryKeys

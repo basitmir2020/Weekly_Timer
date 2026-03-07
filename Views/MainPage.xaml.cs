@@ -24,9 +24,6 @@ public partial class MainPage : ContentPage
     protected override async void OnAppearing()
     {
         base.OnAppearing();
-        
-        // Yield to allow the native page transition animation to complete first
-        await Task.Delay(150);
 
         if (BindingContext is MainViewModel vm)
         {

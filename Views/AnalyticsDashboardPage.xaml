@@ -4,6 +4,7 @@
              xmlns:controls="clr-namespace:WeeklyTimetable.Controls"
              xmlns:vm="clr-namespace:WeeklyTimetable.ViewModels"
              x:Class="WeeklyTimetable.Views.AnalyticsDashboardPage"
+             x:DataType="vm:AnalyticsViewModel"
              BackgroundColor="{AppThemeBinding Light={StaticResource BgPageLight}, Dark={StaticResource BgPageDark}}"
              Title="Analytics">
 
@@ -71,12 +72,12 @@
             <!-- Mood Trend -->
             <Label Text="😊 Mood Trend (14 days)" Style="{StaticResource H2}" Margin="0,8,0,0" />
             <Border Style="{StaticResource CardStyle}">
-                <CollectionView ItemsSource="{Binding MoodTrend}" HeightRequest="120">
+                <CollectionView ItemsSource="{Binding MoodTrend}" HeightRequest="120" ItemSizingStrategy="MeasureFirstItem" SelectionMode="None">
                     <CollectionView.ItemsLayout>
                         <LinearItemsLayout Orientation="Horizontal" ItemSpacing="12" />
                     </CollectionView.ItemsLayout>
                     <CollectionView.ItemTemplate>
-                        <DataTemplate>
+                        <DataTemplate x:DataType="vm:MoodEntry">
                             <VerticalStackLayout Spacing="4" WidthRequest="48">
                                 <Label Text="{Binding Energy}" FontSize="20" HorizontalOptions="Center" TextColor="{StaticResource AccentPurple}" />
                                 <Label Text="{Binding DateLabel}" Style="{StaticResource MonoLabel}" HorizontalOptions="Center" />

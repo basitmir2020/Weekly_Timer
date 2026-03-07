@@ -13,20 +13,6 @@ public partial class OnboardingPage : ContentPage
         InitializeComponent();
         BindingContext = new OnboardingViewModel();
     }
-
-    /// <summary>
-    /// Connects page indicator to the onboarding carousel when the page becomes visible.
-    /// </summary>
-    /// <returns>None.</returns>
-    /// <remarks>
-    /// Side effects: wires indicator view at runtime to ensure control references are initialized.
-    /// </remarks>
-    protected override void OnAppearing()
-    {
-        base.OnAppearing();
-        // Connect IndicatorView to CarouselView programmatically
-        OnboardingCarousel.IndicatorView = pageIndicator;
-    }
 }
 
 public class OnboardingSlide

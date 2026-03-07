@@ -9,6 +9,9 @@ namespace WeeklyTimetable.Controls;
 
 public partial class HeatmapGridControl : ContentView
 {
+    private readonly NotifyCollectionChangedEventHandler _collectionChangedHandler;
+    private INotifyCollectionChanged? _subscribedCollection;
+
     public static readonly BindableProperty HeatmapCellsProperty = BindableProperty.Create(
         nameof(HeatmapCells),
         typeof(ObservableCollection<HeatmapCell>),
@@ -28,6 +31,7 @@ public partial class HeatmapGridControl : ContentView
     public HeatmapGridControl()
     {
         InitializeComponent();
+        _collectionChangedHandler = (_, _) => canvasView.InvalidateSurface();
     }
 
     /// <summary>
@@ -42,14 +46,29 @@ public partial class HeatmapGridControl : ContentView
     /// </remarks>
     private static void OnHeatmapDataChanged(BindableObject bindable, object oldValue, object newValue)
     {
-        if (newValue is INotifyCollectionChanged collection)
+        if (bindable is not HeatmapGridControl control)
+            return;
+
+        if (control._subscribedCollection != null)
+            control._subscribedCollection.CollectionChanged -= control._collectionChangedHandler;
+
+        control._subscribedCollection = newValue as INotifyCollectionChanged;
+
+        if (control._subscribedCollection != null)
+            control._subscribedCollection.CollectionChanged += control._collectionChangedHandler;
+
+        control.canvasView.InvalidateSurface();
+    }
+
+    protected override void OnHandlerChanging(HandlerChangingEventArgs args)
+    {
+        if (args.NewHandler == null && _subscribedCollection != null)
         {
-            // Keep redraws in sync with incremental collection updates.
-            // Potential bug: this unsubscribe uses a new lambda instance and will not detach previous handlers.
-            collection.CollectionChanged -= (s, e) => (bindable as HeatmapGridControl)?.canvasView.InvalidateSurface();
-            collection.CollectionChanged += (s, e) => (bindable as HeatmapGridControl)?.canvasView.InvalidateSurface();
+            _subscribedCollection.CollectionChanged -= _collectionChangedHandler;
+            _subscribedCollection = null;
         }
-        (bindable as HeatmapGridControl)?.canvasView.InvalidateSurface();
+
+        base.OnHandlerChanging(args);
     }
 
     /// <summary>

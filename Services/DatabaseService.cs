@@ -7,6 +7,7 @@ public class DatabaseService : IDatabaseService
 {
     private SQLiteAsyncConnection? _connection;
     private readonly string _dbPath;
+    private readonly SemaphoreSlim _initLock = new(1, 1);
 
     /// <summary>
     /// Creates the SQLite database service and computes the database file path in app data storage.
@@ -28,11 +29,7 @@ public class DatabaseService : IDatabaseService
     /// </remarks>
     public async Task InitializeAsync()
     {
-        if (_connection != null) return;
-        _connection = new SQLiteAsyncConnection(_dbPath);
-        await _connection.CreateTableAsync<StreakRecord>();
-        await _connection.CreateTableAsync<DailyCheckIn>();
-        await _connection.CreateTableAsync<WeeklyGoal>();
+        await EnsureReady();
     }
 
     /// <summary>
@@ -41,7 +38,24 @@ public class DatabaseService : IDatabaseService
     /// <returns>A task that completes when the connection is ready.</returns>
     private async Task EnsureReady()
     {
-        if (_connection == null) await InitializeAsync();
+        if (_connection != null)
+            return;
+
+        await _initLock.WaitAsync().ConfigureAwait(false);
+        try
+        {
+            if (_connection != null)
+                return;
+
+            _connection = new SQLiteAsyncConnection(_dbPath);
+            await _connection.CreateTableAsync<StreakRecord>().ConfigureAwait(false);
+            await _connection.CreateTableAsync<DailyCheckIn>().ConfigureAwait(false);
+            await _connection.CreateTableAsync<WeeklyGoal>().ConfigureAwait(false);
+        }
+        finally
+        {
+            _initLock.Release();
+        }
     }
 
     /// <summary>

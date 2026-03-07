@@ -3,11 +3,6 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CommunityToolkit.Mvvm.Messaging;
 using WeeklyTimetable.Models;
-using System.Collections.ObjectModel;
-using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
-using CommunityToolkit.Mvvm.Messaging;
-using WeeklyTimetable.Models;
 using WeeklyTimetable.Services;
 
 namespace WeeklyTimetable.ViewModels;
@@ -17,6 +12,7 @@ public partial class SettingsViewModel : ObservableObject
     private readonly ISupabaseSyncService _supabase;
     private readonly IPersistenceService _persistence;
     private readonly IAlarmSoundPickerService _alarmSoundPicker;
+    private bool _isMasterScheduleLoaded;
 
     [ObservableProperty] private bool _notificationsEnabled;
     [ObservableProperty] private bool _hapticEnabled = true;
@@ -60,9 +56,9 @@ public partial class SettingsViewModel : ObservableObject
         // Resolve the display name for the previously chosen alarm sound
         var savedUri = Preferences.Get("alarm_sound_uri", null);
         SelectedAlarmSoundName = _alarmSoundPicker.GetSoundName(savedUri);
-
-        _ = LoadMasterScheduleAsync();
     }
+
+    public Task EnsureMasterScheduleLoadedAsync() => LoadMasterScheduleAsync(forceReload: false);
 
     /// <summary>
     /// Loads the editable master weekly schedule from storage or falls back to bundled defaults.
@@ -71,8 +67,11 @@ public partial class SettingsViewModel : ObservableObject
     /// <remarks>
     /// Side effects: updates internal schedule cache and refreshes day block editor collection.
     /// </remarks>
-    private async Task LoadMasterScheduleAsync()
+    private async Task LoadMasterScheduleAsync(bool forceReload)
     {
+        if (_isMasterScheduleLoaded && !forceReload)
+            return;
+
         var sched = await _persistence.LoadStateAsync<Dictionary<string, List<ScheduleBlock>>>("sched_v3");
         if (sched != null && sched.Count > 0)
         {
@@ -82,6 +81,8 @@ public partial class SettingsViewModel : ObservableObject
         {
             _masterSchedule = WeeklyTimetable.Data.ScheduleData.GetDefaultSchedule();
         }
+
+        _isMasterScheduleLoaded = true;
         RefreshDayBlocks();
     }
 
@@ -92,6 +93,9 @@ public partial class SettingsViewModel : ObservableObject
     /// <returns>None.</returns>
     partial void OnSelectedDayChanged(string value)
     {
+        if (!_isMasterScheduleLoaded)
+            return;
+
         RefreshDayBlocks();
     }
 
@@ -240,8 +244,11 @@ public partial class SettingsViewModel : ObservableObject
 
 public partial class TemplateBlockEditor : ObservableObject
 {
+    private const int SaveDebounceMilliseconds = 300;
+
     private readonly ScheduleBlock _block;
     private readonly Func<Task> _onChanged;
+    private CancellationTokenSource? _saveDebounceCts;
 
     public string Label => _block.Label;
     public string Icon => _block.Icon;
@@ -277,18 +284,31 @@ public partial class TemplateBlockEditor : ObservableObject
     partial void OnTimeValueChanged(TimeSpan value)
     {
         _block.Time = value.ToString(@"hh\:mm");
-        
-        // Using async void here is necessary for the partial method property change hook,
-        // but we carefully await the persistence call before signaling the refresh.
-        _ = NotifyChangedAsync();
+
+        _saveDebounceCts?.Cancel();
+        _saveDebounceCts?.Dispose();
+        _saveDebounceCts = new CancellationTokenSource();
+
+        _ = NotifyChangedAsync(_saveDebounceCts.Token);
     }
 
-    private async Task NotifyChangedAsync()
+    private async Task NotifyChangedAsync(CancellationToken cancellationToken)
     {
-        if (_onChanged != null)
+        try
         {
-            await _onChanged.Invoke();
+            // TimePicker emits rapid change events while scrolling; debounce to one persisted write.
+            await Task.Delay(SaveDebounceMilliseconds, cancellationToken);
+
+            if (_onChanged != null)
+            {
+                await _onChanged.Invoke();
+            }
+
+            WeakReferenceMessenger.Default.Send(new ScheduleChangedMessage(true));
         }
-        WeakReferenceMessenger.Default.Send(new ScheduleChangedMessage(true));
+        catch (OperationCanceledException)
+        {
+            // Expected when the user keeps scrolling and a newer selection supersedes this one.
+        }
     }
 }
