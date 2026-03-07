@@ -15,7 +15,7 @@ public partial class MainPage : ContentPage
         base.OnAppearing();
         
         // Yield to allow the native page transition animation to complete first
-        await Task.Yield();
+        await Task.Delay(150);
 
         if (BindingContext is MainViewModel vm)
         {

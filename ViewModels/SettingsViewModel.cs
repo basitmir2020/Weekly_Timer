@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
 using WeeklyTimetable.Models;
 using WeeklyTimetable.Services;
 
@@ -155,5 +156,6 @@ public partial class TemplateBlockEditor : ObservableObject
     {
         _block.Time = value.ToString(@"hh\:mm");
         _onChanged?.Invoke();
+        WeakReferenceMessenger.Default.Send(new ScheduleChangedMessage(true));
     }
 }

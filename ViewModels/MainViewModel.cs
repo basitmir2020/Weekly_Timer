@@ -7,9 +7,11 @@ using WeeklyTimetable.Models;
 using WeeklyTimetable.Services;
 using WeeklyTimetable.Data;
 
+using CommunityToolkit.Mvvm.Messaging;
+
 namespace WeeklyTimetable.ViewModels;
 
-public partial class MainViewModel : ObservableObject
+public partial class MainViewModel : ObservableObject, IRecipient<WeeklyTimetable.Models.ScheduleChangedMessage>
 {
     private const string STATE_KEY_V3 = "sched_v3";
     private const string STATE_KEY = "sched_v2";
@@ -46,6 +48,8 @@ public partial class MainViewModel : ObservableObject
     // Focus Mode (spec §8.16) — shows only current + next 2 blocks; not persisted
     [ObservableProperty]
     private bool _isFocusMode;
+    
+    public bool IsLoaded { get; private set; }
 
     public ObservableCollection<ScheduleBlock> FilteredBlocks { get; } = new();
     public ObservableCollection<DayOverviewViewModel> WeekStats { get; } = new();
@@ -60,10 +64,14 @@ public partial class MainViewModel : ObservableObject
         
         ActiveDayStats = new DayOverviewViewModel();
         ActiveDay = DateTime.Today.DayOfWeek.ToString();
+
+        CommunityToolkit.Mvvm.Messaging.WeakReferenceMessenger.Default.RegisterAll(this);
     }
 
     public async Task LoadDataAsync()
     {
+        if (IsLoaded) return;
+        
         try
         {
             // 1. Load full custom schedule if exists
@@ -119,6 +127,8 @@ public partial class MainViewModel : ObservableObject
 
             // 6. Schedule notifications (best effort; should never block UI)
             _ = SafeScheduleNotificationsAsync();
+            
+            IsLoaded = true;
         }
         catch (Exception ex)
         {
@@ -126,11 +136,20 @@ public partial class MainViewModel : ObservableObject
         }
     }
 
+    public void Receive(WeeklyTimetable.Models.ScheduleChangedMessage message)
+    {
+        if (message.Value)
+        {
+            IsLoaded = false;
+            _ = LoadDataAsync();
+        }
+    }
+
     private async Task SafeScheduleNotificationsAsync()
     {
         try
         {
-            await ScheduleNotificationsAsync();
+            await Task.Run(async () => await ScheduleNotificationsAsync());
         }
         catch (Exception ex)
         {

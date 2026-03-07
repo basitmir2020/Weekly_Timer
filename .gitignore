@@ -2,3 +2,11 @@
 bin
 obj
 spec.md
+*.txt
+*.log
+*.user
+*.suo
+*.cache
+*.pdb
+*.db
+*.bak       
