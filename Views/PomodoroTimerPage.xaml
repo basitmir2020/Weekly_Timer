@@ -5,7 +5,7 @@
              xmlns:controls="clr-namespace:WeeklyTimetable.Controls"
              xmlns:converters="clr-namespace:WeeklyTimetable.Converters"
              x:Class="WeeklyTimetable.Views.PomodoroTimerPage"
-             BackgroundColor="{StaticResource BgPage}"
+             BackgroundColor="{AppThemeBinding Light={StaticResource BgPageLight}, Dark={StaticResource BgPageDark}}"
              Title="Focus Timer">
 
     <ContentPage.Resources>
@@ -31,15 +31,15 @@
                 <Button Text="Deep Focus"
                         Command="{Binding SetFocusModeCommand}"
                         BackgroundColor="{StaticResource AccentPurple}"
-                        TextColor="{StaticResource BgPage}"
+                        TextColor="{AppThemeBinding Light={StaticResource BgPageLight}, Dark={StaticResource BgPageDark}}"
                         CornerRadius="20"
                         HeightRequest="40"
                         Padding="16,0" />
                 <Button Text="Break"
                         Command="{Binding SetBreakModeCommand}"
                         BackgroundColor="Transparent"
-                        TextColor="{StaticResource TextHeading}"
-                        BorderColor="{StaticResource BorderVisible}"
+                        TextColor="{AppThemeBinding Light={StaticResource TextHeadingLight}, Dark={StaticResource TextHeadingDark}}"
+                        BorderColor="{AppThemeBinding Light={StaticResource BorderVisibleLight}, Dark={StaticResource BorderVisibleDark}}"
                         BorderWidth="1"
                         CornerRadius="20"
                         HeightRequest="40"
@@ -47,8 +47,8 @@
                 <Button Text="Custom"
                         Command="{Binding ShowCustomTimerCommand}"
                         BackgroundColor="Transparent"
-                        TextColor="{StaticResource TextHeading}"
-                        BorderColor="{StaticResource BorderVisible}"
+                        TextColor="{AppThemeBinding Light={StaticResource TextHeadingLight}, Dark={StaticResource TextHeadingDark}}"
+                        BorderColor="{AppThemeBinding Light={StaticResource BorderVisibleLight}, Dark={StaticResource BorderVisibleDark}}"
                         BorderWidth="1"
                         CornerRadius="20"
                         HeightRequest="40"
@@ -62,13 +62,14 @@
             <controls:RingProgressControl Size="280" 
                                           Stroke="12" 
                                           Pct="{Binding ProgressPct}" 
-                                          RingColor="{StaticResource AccentPurple}" />
+                                          RingColor="{StaticResource AccentPurple}"
+                                          TrackColor="{AppThemeBinding Light={StaticResource BorderVisibleLight}, Dark={StaticResource BorderVisibleDark}}" />
                                           
             <!-- Time Display inside Ring -->
             <Label Text="{Binding SecondsRemaining, Converter={StaticResource SecondsToTimeConverter}}" 
                    FontSize="64" 
                    FontAttributes="Bold" 
-                   TextColor="{StaticResource TextHeading}"
+                   TextColor="{AppThemeBinding Light={StaticResource TextHeadingLight}, Dark={StaticResource TextHeadingDark}}"
                    HorizontalOptions="Center" 
                    VerticalOptions="Center" />
         </Grid>
@@ -79,8 +80,8 @@
             <Button Text="Reset" 
                     Command="{Binding ResetTimerCommand}"
                     BackgroundColor="Transparent"
-                    TextColor="{StaticResource TextMuted}"
-                    BorderColor="{StaticResource BorderVisible}"
+                    TextColor="{AppThemeBinding Light={StaticResource TextMutedLight}, Dark={StaticResource TextMutedDark}}"
+                    BorderColor="{AppThemeBinding Light={StaticResource BorderVisibleLight}, Dark={StaticResource BorderVisibleDark}}"
                     BorderWidth="1"
                     CornerRadius="24"
                     WidthRequest="80"
@@ -89,7 +90,7 @@
             <Button Text="{Binding IsRunning, Converter={StaticResource StartLabelConverter}}" 
                     Command="{Binding StartPauseTimerCommand}"
                     BackgroundColor="{StaticResource AccentPurple}"
-                    TextColor="{StaticResource BgPage}"
+                    TextColor="{AppThemeBinding Light={StaticResource BgPageLight}, Dark={StaticResource BgPageDark}}"
                     FontAttributes="Bold"
                     CornerRadius="24"
                     WidthRequest="140"
@@ -98,8 +99,8 @@
             <Button Text="Skip" 
                     Command="{Binding SkipTimerCommand}"
                     BackgroundColor="Transparent"
-                    TextColor="{StaticResource TextMuted}"
-                    BorderColor="{StaticResource BorderVisible}"
+                    TextColor="{AppThemeBinding Light={StaticResource TextMutedLight}, Dark={StaticResource TextMutedDark}}"
+                    BorderColor="{AppThemeBinding Light={StaticResource BorderVisibleLight}, Dark={StaticResource BorderVisibleDark}}"
                     BorderWidth="1"
                     CornerRadius="24"
                     WidthRequest="80"
@@ -111,7 +112,7 @@
                 Command="{Binding StopWarningCommand}"
                 IsVisible="{Binding IsWarningActive}"
                 BackgroundColor="{StaticResource AccentPurple}"
-                TextColor="{StaticResource BgPage}"
+                TextColor="{AppThemeBinding Light={StaticResource BgPageLight}, Dark={StaticResource BgPageDark}}"
                 FontAttributes="Bold"
                 CornerRadius="24"
                 HorizontalOptions="Center"
@@ -133,12 +134,12 @@
                 <TapGestureRecognizer />
             </Border.GestureRecognizers>
             <VerticalStackLayout Spacing="16">
-                <Label Text="Custom Timer Settings" FontAttributes="Bold" FontSize="16" TextColor="{StaticResource TextHeading}" HorizontalOptions="Center" />
+                <Label Text="Custom Timer Settings" FontAttributes="Bold" FontSize="16" TextColor="{AppThemeBinding Light={StaticResource TextHeadingLight}, Dark={StaticResource TextHeadingDark}}" HorizontalOptions="Center" />
 
                 <VerticalStackLayout Spacing="4">
                     <HorizontalStackLayout Spacing="8">
                         <Label Text="Minutes" />
-                        <Label Text="{Binding CustomMinutes, StringFormat='{0:0} min'}" TextColor="{StaticResource TextMuted}" />
+                        <Label Text="{Binding CustomMinutes, StringFormat='{0:0} min'}" TextColor="{AppThemeBinding Light={StaticResource TextMutedLight}, Dark={StaticResource TextMutedDark}}" />
                     </HorizontalStackLayout>
                     <Stepper Minimum="0" Maximum="59" Increment="1" Value="{Binding CustomMinutes}" HorizontalOptions="Center" />
                 </VerticalStackLayout>
@@ -146,7 +147,7 @@
                 <VerticalStackLayout Spacing="4">
                     <HorizontalStackLayout Spacing="8">
                         <Label Text="Seconds" />
-                        <Label Text="{Binding CustomSeconds, StringFormat='{0:0} sec'}" TextColor="{StaticResource TextMuted}" />
+                        <Label Text="{Binding CustomSeconds, StringFormat='{0:0} sec'}" TextColor="{AppThemeBinding Light={StaticResource TextMutedLight}, Dark={StaticResource TextMutedDark}}" />
                     </HorizontalStackLayout>
                     <Stepper Minimum="0" Maximum="59" Increment="1" Value="{Binding CustomSeconds}" HorizontalOptions="Center" />
                 </VerticalStackLayout>
@@ -155,8 +156,8 @@
                     <Button Text="Cancel"
                             Command="{Binding CloseCustomTimerCommand}"
                             BackgroundColor="Transparent"
-                            TextColor="{StaticResource TextMuted}"
-                            BorderColor="{StaticResource BorderVisible}"
+                            TextColor="{AppThemeBinding Light={StaticResource TextMutedLight}, Dark={StaticResource TextMutedDark}}"
+                            BorderColor="{AppThemeBinding Light={StaticResource BorderVisibleLight}, Dark={StaticResource BorderVisibleDark}}"
                             BorderWidth="1"
                             CornerRadius="10"
                             HeightRequest="40"
@@ -164,7 +165,7 @@
                     <Button Text="Apply"
                             Command="{Binding ApplyCustomTimerCommand}"
                             BackgroundColor="{StaticResource AccentPurple}"
-                            TextColor="{StaticResource BgPage}"
+                            TextColor="{AppThemeBinding Light={StaticResource BgPageLight}, Dark={StaticResource BgPageDark}}"
                             FontAttributes="Bold"
                             CornerRadius="10"
                             HeightRequest="40"

@@ -2,7 +2,7 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="WeeklyTimetable.Views.EditBlockPage"
-             BackgroundColor="{StaticResource BgPage}"
+             BackgroundColor="{AppThemeBinding Light={StaticResource BgPageLight}, Dark={StaticResource BgPageDark}}"
              Title="{Binding IsEditing, StringFormat='{0}'}" >
 
     <ScrollView>
@@ -30,7 +30,7 @@
                     <Entry Grid.Column="1"
                            Text="{Binding Label}"
                            Placeholder="e.g. DSA Practice"
-                           TextColor="{StaticResource TextBody}"
+                           TextColor="{AppThemeBinding Light={StaticResource TextBodyLight}, Dark={StaticResource TextBodyDark}}"
                            BackgroundColor="Transparent" />
                 </Grid>
             </Border>
@@ -42,7 +42,7 @@
                     <Entry Grid.Column="1"
                            Text="{Binding Icon}"
                            Placeholder="Emoji e.g. 🧠"
-                           TextColor="{StaticResource TextBody}"
+                           TextColor="{AppThemeBinding Light={StaticResource TextBodyLight}, Dark={StaticResource TextBodyDark}}"
                            BackgroundColor="Transparent" />
                 </Grid>
             </Border>
@@ -68,10 +68,19 @@
                 </VerticalStackLayout>
             </Border>
 
-            <!-- Save -->
+            <!-- Notes -->
+            <Border Style="{StaticResource CardStyle}">
+                <VerticalStackLayout Spacing="8">
+                    <Label Text="📓  Notes (Optional)" FontAttributes="Bold" />
+                    <Editor Placeholder="Any reflections from today..." PlaceholderColor="{AppThemeBinding Light={StaticResource TextMutedLight}, Dark={StaticResource TextMutedDark}}"
+                            Text="{Binding Notes}" TextColor="{AppThemeBinding Light={StaticResource TextBodyLight}, Dark={StaticResource TextBodyDark}}"
+                            BackgroundColor="Transparent" HeightRequest="100" />
+                </VerticalStackLayout>
+            </Border>
+
             <Button Text="Save Block" Command="{Binding SaveCommand}"
                     BackgroundColor="{StaticResource AccentPurple}"
-                    TextColor="{StaticResource BgPage}"
+                    TextColor="{AppThemeBinding Light={StaticResource BgPageLight}, Dark={StaticResource BgPageDark}}"
                     FontAttributes="Bold" CornerRadius="12" HeightRequest="52" />
 
             <!-- Delete (only when editing) -->

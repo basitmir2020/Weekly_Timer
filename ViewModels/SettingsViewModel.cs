@@ -176,7 +176,7 @@ public partial class SettingsViewModel : ObservableObject
     partial void OnSelectedFontSizeChanged(string value)
     {
         Preferences.Set("font_size", value);
-        App.ApplyFontSize(value);
+        App.ApplyGlobalFontSize(value);
     }
 
     /// <summary>

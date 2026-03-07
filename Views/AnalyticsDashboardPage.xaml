@@ -4,7 +4,7 @@
              xmlns:controls="clr-namespace:WeeklyTimetable.Controls"
              xmlns:vm="clr-namespace:WeeklyTimetable.ViewModels"
              x:Class="WeeklyTimetable.Views.AnalyticsDashboardPage"
-             BackgroundColor="{StaticResource BgPage}"
+             BackgroundColor="{AppThemeBinding Light={StaticResource BgPageLight}, Dark={StaticResource BgPageDark}}"
              Title="Analytics">
 
     <ScrollView>
@@ -14,8 +14,8 @@
             <Border IsVisible="{Binding HasWeeklyGoals}" Style="{StaticResource CardStyle}">
                 <VerticalStackLayout Spacing="12">
                     <Grid ColumnDefinitions="*, Auto">
-                        <Label Grid.Column="0" Text="🎯 Weekly Goals" TextColor="{StaticResource TextHeading}" FontAttributes="Bold" FontSize="16" />
-                        <Label Grid.Column="1" Text="{Binding GoalsProgressText}" TextColor="{StaticResource TextMuted}" FontSize="12" VerticalOptions="Center" />
+                        <Label Grid.Column="0" Text="🎯 Weekly Goals" TextColor="{AppThemeBinding Light={StaticResource TextHeadingLight}, Dark={StaticResource TextHeadingDark}}" FontAttributes="Bold" FontSize="16" />
+                        <Label Grid.Column="1" Text="{Binding GoalsProgressText}" TextColor="{AppThemeBinding Light={StaticResource TextMutedLight}, Dark={StaticResource TextMutedDark}}" FontSize="12" VerticalOptions="Center" />
                     </Grid>
 
                     <Label Text="{Binding GoalCountdownText}" TextColor="#facc15" FontSize="12" />
@@ -26,8 +26,8 @@
                                 <Grid ColumnDefinitions="Auto, *" ColumnSpacing="8">
                                     <Label Grid.Column="0" Text="{Binding StatusText}" TextColor="{Binding StatusColor}" FontSize="14" VerticalOptions="Center" />
                                     <HorizontalStackLayout Grid.Column="1" Spacing="6">
-                                        <Label Text="{Binding Title}" FontAttributes="Bold" FontSize="12" />
-                                        <Label Text="{Binding GoalText}" TextColor="{StaticResource TextMuted}" FontSize="12" LineBreakMode="TailTruncation" />
+                                        <Label Text="{Binding Title}" FontAttributes="Bold" FontSize="12" TextColor="{AppThemeBinding Light={StaticResource TextHeadingLight}, Dark={StaticResource TextHeadingDark}}" />
+                                        <Label Text="{Binding GoalText}" TextColor="{AppThemeBinding Light={StaticResource TextMutedLight}, Dark={StaticResource TextMutedDark}}" FontSize="12" LineBreakMode="TailTruncation" />
                                     </HorizontalStackLayout>
                                 </Grid>
                             </DataTemplate>
@@ -56,7 +56,7 @@
                 <Border Grid.Column="2" Style="{StaticResource CardStyle}">
                     <VerticalStackLayout HorizontalOptions="Center" Spacing="4">
                         <Label Text="📅" FontSize="24" HorizontalOptions="Center" />
-                        <Label Text="{Binding TotalCompleteDays}" FontSize="28" FontAttributes="Bold" TextColor="{StaticResource TextHeading}" HorizontalOptions="Center" />
+                        <Label Text="{Binding TotalCompleteDays}" FontSize="28" FontAttributes="Bold" TextColor="{AppThemeBinding Light={StaticResource TextHeadingLight}, Dark={StaticResource TextHeadingDark}}" HorizontalOptions="Center" />
                         <Label Text="Complete" Style="{StaticResource MonoLabel}" HorizontalOptions="Center" />
                     </VerticalStackLayout>
                 </Border>
@@ -89,7 +89,7 @@
             <!-- Reload -->
             <Button Text="Refresh" Command="{Binding LoadCommand}"
                     BackgroundColor="Transparent" TextColor="{StaticResource AccentPurple}"
-                    BorderColor="{StaticResource BorderVisible}" BorderWidth="1" CornerRadius="8" />
+                    BorderColor="{AppThemeBinding Light={StaticResource BorderVisibleLight}, Dark={StaticResource BorderVisibleDark}}" BorderWidth="1" CornerRadius="8" />
         </VerticalStackLayout>
     </ScrollView>
 </ContentPage>

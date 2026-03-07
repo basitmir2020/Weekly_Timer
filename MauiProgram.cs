@@ -67,6 +67,7 @@ public static class MauiProgram
         builder.Services.AddTransient<ProfileViewModel>();
         builder.Services.AddSingleton<SettingsViewModel>();
         builder.Services.AddTransient<EditBlockViewModel>();
+        builder.Services.AddTransient<BlockDetailViewModel>();
 
         // ── Views / Pages ─────────────────────────────────────────
         builder.Services.AddTransient<MainPage>();
@@ -79,6 +80,7 @@ public static class MauiProgram
         builder.Services.AddTransient<ProfilesPage>();
         builder.Services.AddTransient<EditBlockPage>();
         builder.Services.AddTransient<ProductivityPage>();
+        builder.Services.AddTransient<BlockDetailSheet>();
 
         // AppShell registered last so its ctor resolves pages from DI
         builder.Services.AddSingleton<AppShell>();

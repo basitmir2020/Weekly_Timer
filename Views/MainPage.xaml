@@ -6,7 +6,7 @@
              xmlns:converters="clr-namespace:WeeklyTimetable.Converters"
              xmlns:controls="clr-namespace:WeeklyTimetable.Controls"
              x:Class="WeeklyTimetable.Views.MainPage"
-             BackgroundColor="{StaticResource BgPage}">
+             BackgroundColor="{AppThemeBinding Light={StaticResource BgPageLight}, Dark={StaticResource BgPageDark}}">
 
     <ContentPage.Resources>
         <ResourceDictionary>
@@ -28,7 +28,7 @@
     <Grid Grid.Row="0" RowDefinitions="Auto, *">
         
         <!-- HEADER ROW: Title + 7 Mini Progress Bars -->
-        <Border Grid.Row="0" BackgroundColor="{StaticResource BgHeader}" Margin="0,0,0,0" Padding="16, 20">
+        <Border Grid.Row="0" BackgroundColor="{AppThemeBinding Light={StaticResource BgHeaderLight}, Dark={StaticResource BgHeaderDark}}" Margin="0,0,0,0" Padding="16, 20">
             <VerticalStackLayout Spacing="16">
                 <!-- Titles -->
                 <HorizontalStackLayout Spacing="8" VerticalOptions="Center">
@@ -52,16 +52,16 @@
                                 <Label Text="{Binding DayAbbreviation}" FontSize="10" HorizontalOptions="Center">
                                     <Label.Triggers>
                                         <DataTrigger TargetType="Label" Binding="{Binding IsActive}" Value="True">
-                                            <Setter Property="TextColor" Value="{StaticResource TextHeading}" />
+                                            <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource TextHeadingLight}, Dark={StaticResource TextHeadingDark}}" />
                                         </DataTrigger>
                                         <DataTrigger TargetType="Label" Binding="{Binding IsActive}" Value="False">
-                                            <Setter Property="TextColor" Value="{StaticResource TextMuted}" />
+                                            <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource TextMutedLight}, Dark={StaticResource TextMutedDark}}" />
                                         </DataTrigger>
                                     </Label.Triggers>
                                 </Label>
                                 
                                 <!-- Progress Bar Wrapper -->
-                                <Border BackgroundColor="{StaticResource BorderVisible}" Stroke="Transparent" StrokeShape="RoundRectangle 4" HeightRequest="6" WidthRequest="35">
+                                <Border BackgroundColor="{AppThemeBinding Light={StaticResource BorderVisibleLight}, Dark={StaticResource BorderVisibleDark}}" Stroke="Transparent" StrokeShape="RoundRectangle 4" HeightRequest="6" WidthRequest="35">
                                     <BoxView Color="{StaticResource AccentPurple}" WidthRequest="{Binding CompletionPct, Converter={converters:PercentToWidthConverter}}" HorizontalOptions="Start" />
                                 </Border>
                             </VerticalStackLayout>
@@ -78,16 +78,17 @@
                 <!-- Day Header (Ring + Text + Focus Mode toggle) -->
                 <Grid ColumnDefinitions="Auto, *, Auto, Auto" Padding="0,8">
                     <!-- Progress Ring -->
-                    <controls:RingProgressControl Grid.Column="0" 
-                                                  Size="52" 
-                                                  Pct="{Binding ActiveDayStats.CompletionPct}" 
-                                                  Stroke="5" 
-                                                  RingColor="{StaticResource AccentPurple}" />
+                     <controls:RingProgressControl Grid.Column="0" 
+                                                   Size="52" 
+                                                   Pct="{Binding ActiveDayStats.CompletionPct}" 
+                                                   Stroke="5" 
+                                                   RingColor="{StaticResource AccentPurple}"
+                                                   TrackColor="{AppThemeBinding Light={StaticResource BorderVisibleLight}, Dark={StaticResource BorderVisibleDark}}" />
                     
                     <!-- Day Titles -->
                     <VerticalStackLayout Grid.Column="1" VerticalOptions="Center" Margin="16,0,0,0">
                         <Label Text="{Binding ActiveDay}" Style="{StaticResource H2}" />
-                        <Label Text="{Binding ActiveDayStats.CompletedBlocks, StringFormat='{0} steps done'}" TextColor="{StaticResource TextMuted}" />
+                        <Label Text="{Binding ActiveDayStats.CompletedBlocks, StringFormat='{0} steps done'}" TextColor="{AppThemeBinding Light={StaticResource TextMutedLight}, Dark={StaticResource TextMutedDark}}" />
                     </VerticalStackLayout>
 
                     <!-- Focus Mode Toggle Button -->
@@ -98,7 +99,7 @@
                                     <Setter Property="TextColor" Value="{StaticResource AccentPurple}" />
                                 </DataTrigger>
                                 <DataTrigger TargetType="Label" Binding="{Binding IsFocusMode}" Value="True">
-                                    <Setter Property="TextColor" Value="{StaticResource TextMuted}" />
+                                    <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource TextMutedLight}, Dark={StaticResource TextMutedDark}}" />
                                 </DataTrigger>
                             </Label.Triggers>
                         </Label>
@@ -111,7 +112,7 @@
                                     <Setter Property="TextColor" Value="{StaticResource AccentPurple}" />
                                 </DataTrigger>
                                 <DataTrigger TargetType="Label" Binding="{Binding IsFocusMode}" Value="False">
-                                    <Setter Property="TextColor" Value="{StaticResource TextMuted}" />
+                                    <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource TextMutedLight}, Dark={StaticResource TextMutedDark}}" />
                                 </DataTrigger>
                             </Label.Triggers>
                         </Label>
@@ -123,8 +124,8 @@
                             Command="{Binding ResetDayCommand}" 
                             IsVisible="{Binding HasAnyCompleted}"
                             BackgroundColor="Transparent"
-                            TextColor="{StaticResource TextMuted}"
-                            BorderColor="{StaticResource BorderVisible}"
+                            TextColor="{AppThemeBinding Light={StaticResource TextMutedLight}, Dark={StaticResource TextMutedDark}}"
+                            BorderColor="{AppThemeBinding Light={StaticResource BorderVisibleLight}, Dark={StaticResource BorderVisibleDark}}"
                             BorderWidth="1"
                             CornerRadius="8"
                             HeightRequest="36"
@@ -215,7 +216,7 @@
                         Command="{Binding AddBlockCommand}"
                         BackgroundColor="Transparent"
                         TextColor="{StaticResource AccentPurple}"
-                        BorderColor="{StaticResource BorderVisible}"
+                        BorderColor="{AppThemeBinding Light={StaticResource BorderVisibleLight}, Dark={StaticResource BorderVisibleDark}}"
                         BorderWidth="1"
                         CornerRadius="10"
                         HeightRequest="44"

@@ -3,7 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:converters="clr-namespace:WeeklyTimetable.Converters"
              x:Class="WeeklyTimetable.Views.BlockDetailSheet"
-             BackgroundColor="{StaticResource BgPage}"
+             BackgroundColor="{AppThemeBinding Light={StaticResource BgPageLight}, Dark={StaticResource BgPageDark}}"
              Title="Block Details">
 
     <ContentPage.Resources>
@@ -18,9 +18,9 @@
             <Label Text="{Binding Block.Label}" Style="{StaticResource H2}" HorizontalOptions="Center" />
             <HorizontalStackLayout HorizontalOptions="Center" Spacing="12">
                 <Label Text="{Binding Block.Time, Converter={StaticResource Time24To12Hr}}" TextColor="{StaticResource AccentPurple}" FontAttributes="Bold" />
-                <Label Text="·" TextColor="{StaticResource TextMuted}" />
-                <Label Text="{Binding Block.DurationMinutes, Converter={StaticResource DurationToString}}" TextColor="{StaticResource TextMuted}" />
-                <Label Text="·" TextColor="{StaticResource TextMuted}" />
+                <Label Text="·" TextColor="{AppThemeBinding Light={StaticResource TextMutedLight}, Dark={StaticResource TextMutedDark}}" />
+                <Label Text="{Binding Block.DurationMinutes, Converter={StaticResource DurationToString}}" TextColor="{AppThemeBinding Light={StaticResource TextMutedLight}, Dark={StaticResource TextMutedDark}}" />
+                <Label Text="·" TextColor="{AppThemeBinding Light={StaticResource TextMutedLight}, Dark={StaticResource TextMutedDark}}" />
                 <Label Text="{Binding Block.Category}" Style="{StaticResource MonoLabel}" />
             </HorizontalStackLayout>
 
@@ -29,15 +29,15 @@
                 <VerticalStackLayout Spacing="8">
                     <Label Text="📝  Study Notes" FontAttributes="Bold" />
                     <Editor Placeholder="Add notes, key takeaways, or next steps..."
-                            PlaceholderColor="{StaticResource TextMuted}"
-                            Text="{Binding Notes}" TextColor="{StaticResource TextBody}"
+                            PlaceholderColor="{AppThemeBinding Light={StaticResource TextMutedLight}, Dark={StaticResource TextMutedDark}}"
+                            Text="{Binding Notes}" TextColor="{AppThemeBinding Light={StaticResource TextBodyLight}, Dark={StaticResource TextBodyDark}}"
                             BackgroundColor="Transparent" HeightRequest="140" AutoSize="TextChanges" />
                 </VerticalStackLayout>
             </Border>
 
             <!-- Save -->
             <Button Text="Save Notes" Command="{Binding SaveNotesCommand}"
-                    BackgroundColor="{StaticResource AccentPurple}" TextColor="{StaticResource BgPage}"
+                    BackgroundColor="{StaticResource AccentPurple}" TextColor="{AppThemeBinding Light={StaticResource BgPageLight}, Dark={StaticResource BgPageDark}}"
                     FontAttributes="Bold" CornerRadius="12" HeightRequest="48" />
         </VerticalStackLayout>
     </ScrollView>

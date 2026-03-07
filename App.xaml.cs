@@ -4,24 +4,20 @@ namespace WeeklyTimetable;
 
 public partial class App : Application
 {
-    /// <summary>
-    /// Creates the application root and resolves the shell from dependency injection.
-    /// </summary>
-    /// <param name="services">Service provider used to resolve root UI dependencies.</param>
-    /// <remarks>
-    /// Side effects: initializes XAML resources and sets <see cref="Application.MainPage"/>.
-    /// </remarks>
     public App(IServiceProvider services)
     {
         InitializeComponent();
-
-        ApplyTheme();
-        ApplyFontSize();
-
         MainPage = services.GetRequiredService<AppShell>();
     }
 
-    private void ApplyTheme()
+    protected override void OnStart()
+    {
+        base.OnStart();
+        ApplyStartupTheme();
+        ApplyInitialFontSize();
+    }
+
+    private void ApplyStartupTheme()
     {
         var theme = Preferences.Get("theme", "Dark");
         UserAppTheme = theme switch
@@ -32,13 +28,13 @@ public partial class App : Application
         };
     }
 
-    private void ApplyFontSize()
+    private void ApplyInitialFontSize()
     {
         var fontSize = Preferences.Get("font_size", "Medium");
-        ApplyFontSize(fontSize);
+        ApplyGlobalFontSize(fontSize);
     }
 
-    public static void ApplyFontSize(string size)
+    public static void ApplyGlobalFontSize(string size)
     {
         if (Application.Current == null) return;
 

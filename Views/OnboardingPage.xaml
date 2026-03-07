@@ -2,7 +2,7 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="WeeklyTimetable.Views.OnboardingPage"
-             BackgroundColor="{StaticResource BgPage}"
+             BackgroundColor="{AppThemeBinding Light={StaticResource BgPageLight}, Dark={StaticResource BgPageDark}}"
              Shell.NavBarIsVisible="False">
 
     <Grid RowDefinitions="*,Auto">
@@ -12,7 +12,7 @@
                     <VerticalStackLayout VerticalOptions="Center" HorizontalOptions="Center" Spacing="24" Padding="40">
                         <Label Text="{Binding Emoji}"  FontSize="72" HorizontalOptions="Center" />
                         <Label Text="{Binding Title}"  Style="{StaticResource H1}" HorizontalOptions="Center" />
-                        <Label Text="{Binding Body}"   TextColor="{StaticResource TextBody}" HorizontalOptions="Center" HorizontalTextAlignment="Center" FontSize="16" />
+                        <Label Text="{Binding Body}"   TextColor="{AppThemeBinding Light={StaticResource TextBodyLight}, Dark={StaticResource TextBodyDark}}" HorizontalOptions="Center" HorizontalTextAlignment="Center" FontSize="16" />
                     </VerticalStackLayout>
                 </DataTemplate>
             </CarouselView.ItemTemplate>
@@ -21,12 +21,12 @@
         <VerticalStackLayout Grid.Row="1" Spacing="16" Padding="32,16,32,40">
             <IndicatorView x:Name="pageIndicator" HorizontalOptions="Center"
                            SelectedIndicatorColor="{StaticResource AccentPurple}"
-                           IndicatorColor="{StaticResource BorderVisible}" IndicatorSize="8" />
+                           IndicatorColor="{AppThemeBinding Light={StaticResource BorderVisibleLight}, Dark={StaticResource BorderVisibleDark}}" IndicatorSize="8" />
             <Button Text="Get Started" Command="{Binding FinishCommand}"
-                    BackgroundColor="{StaticResource AccentPurple}" TextColor="{StaticResource BgPage}"
+                    BackgroundColor="{StaticResource AccentPurple}" TextColor="{AppThemeBinding Light={StaticResource BgPageLight}, Dark={StaticResource BgPageDark}}"
                     FontAttributes="Bold" CornerRadius="12" HeightRequest="52" />
             <Button Text="Skip" Command="{Binding FinishCommand}"
-                    BackgroundColor="Transparent" TextColor="{StaticResource TextMuted}" />
+                    BackgroundColor="Transparent" TextColor="{AppThemeBinding Light={StaticResource TextMutedLight}, Dark={StaticResource TextMutedDark}}" />
         </VerticalStackLayout>
     </Grid>
 </ContentPage>

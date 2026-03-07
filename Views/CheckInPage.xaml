@@ -4,7 +4,7 @@
              xmlns:converters="clr-namespace:WeeklyTimetable.Converters"
              xmlns:controls="clr-namespace:WeeklyTimetable.Controls"
              x:Class="WeeklyTimetable.Views.CheckInPage"
-             BackgroundColor="{StaticResource BgPage}"
+             BackgroundColor="{AppThemeBinding Light={StaticResource BgPageLight}, Dark={StaticResource BgPageDark}}"
              Title="Daily Check-In">
 
     <ContentPage.Resources>
@@ -42,7 +42,7 @@
             </Border>
 
             <Button Text="Save Check-In" Command="{Binding SaveCheckInCommand}"
-                    BackgroundColor="{StaticResource AccentPurple}" TextColor="{StaticResource BgPage}"
+                    BackgroundColor="{StaticResource AccentPurple}" TextColor="{AppThemeBinding Light={StaticResource BgPageLight}, Dark={StaticResource BgPageDark}}"
                     FontAttributes="Bold" CornerRadius="12" HeightRequest="52" />
 
             <Label Text="✅  Saved for today!" IsVisible="{Binding IsSaved}"

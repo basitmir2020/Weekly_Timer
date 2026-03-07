@@ -37,21 +37,6 @@
     <Color x:Key="AccentPurple">#818cf8</Color>
     <Color x:Key="SuccessGreen">#22c55e</Color>
 
-    <!-- Themed Aliases (Allows existing XAML to remain unchanged) -->
-    <OnAppTheme x:Key="BgPage" x:TypeArguments="Color" Light="{StaticResource BgPageLight}" Dark="{StaticResource BgPageDark}" />
-    <OnAppTheme x:Key="BgHeader" x:TypeArguments="Color" Light="{StaticResource BgHeaderLight}" Dark="{StaticResource BgHeaderDark}" />
-    <OnAppTheme x:Key="BgNav" x:TypeArguments="Color" Light="{StaticResource BgNavLight}" Dark="{StaticResource BgNavDark}" />
-    <OnAppTheme x:Key="BgCardDim" x:TypeArguments="Color" Light="{StaticResource BgCardLight}" Dark="{StaticResource BgCardDark}" />
-    
-    <OnAppTheme x:Key="BorderSubtle" x:TypeArguments="Color" Light="{StaticResource BorderSubtleLight}" Dark="{StaticResource BorderSubtleDark}" />
-    <OnAppTheme x:Key="BorderLight" x:TypeArguments="Color" Light="{StaticResource BorderLightLight}" Dark="{StaticResource BorderLightDark}" />
-    <OnAppTheme x:Key="BorderVisible" x:TypeArguments="Color" Light="{StaticResource BorderVisibleLight}" Dark="{StaticResource BorderVisibleDark}" />
-
-    <OnAppTheme x:Key="TextBody" x:TypeArguments="Color" Light="{StaticResource TextBodyLight}" Dark="{StaticResource TextBodyDark}" />
-    <OnAppTheme x:Key="TextHeading" x:TypeArguments="Color" Light="{StaticResource TextHeadingLight}" Dark="{StaticResource TextHeadingDark}" />
-    <OnAppTheme x:Key="TextMuted" x:TypeArguments="Color" Light="{StaticResource TextMutedLight}" Dark="{StaticResource TextMutedDark}" />
-    <OnAppTheme x:Key="TextVeryMuted" x:TypeArguments="Color" Light="{StaticResource TextVeryMutedLight}" Dark="{StaticResource TextVeryMutedDark}" />
-
     <!-- Category Colors -->
     <Color x:Key="CatSleep">#3b82f6</Color>
     <Color x:Key="CatWork">#22c55e</Color>

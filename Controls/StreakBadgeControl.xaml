@@ -3,8 +3,8 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              x:Class="WeeklyTimetable.Controls.StreakBadgeControl"
              x:Name="thisControl">
-    <Border BackgroundColor="{StaticResource BgCardDim}"
-            Stroke="{StaticResource BorderLight}"
+    <Border BackgroundColor="{AppThemeBinding Light={StaticResource BgCardLight}, Dark={StaticResource BgCardDark}}"
+            Stroke="{AppThemeBinding Light={StaticResource BorderLightLight}, Dark={StaticResource BorderLightDark}}"
             StrokeThickness="1"
             StrokeShape="RoundRectangle 12"
             Padding="8, 4"
@@ -25,7 +25,7 @@
                    FontFamily="DMMono"
                    FontAttributes="Bold"
                    SemanticProperties.Description="Current consecutive days stretch count"
-                   TextColor="{StaticResource TextHeading}"
+                   TextColor="{AppThemeBinding Light={StaticResource TextHeadingLight}, Dark={StaticResource TextHeadingDark}}"
                    VerticalOptions="Center" />
         </StackLayout>
     </Border>

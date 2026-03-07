@@ -5,9 +5,9 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:views="clr-namespace:WeeklyTimetable.Views"
     Shell.TabBarIsVisible="True"
-    Shell.TabBarBackgroundColor="{DynamicResource BgNav}"
-    Shell.TabBarForegroundColor="{DynamicResource TextMuted}"
-    Shell.TabBarUnselectedColor="{DynamicResource TextMuted}"
+    Shell.TabBarBackgroundColor="{AppThemeBinding Light={StaticResource BgNavLight}, Dark={StaticResource BgNavDark}}"
+    Shell.TabBarForegroundColor="{AppThemeBinding Light={StaticResource TextMutedLight}, Dark={StaticResource TextMutedDark}}"
+    Shell.TabBarUnselectedColor="{AppThemeBinding Light={StaticResource TextMutedLight}, Dark={StaticResource TextMutedDark}}"
     Shell.TabBarTitleColor="{DynamicResource AccentPurple}"
     Title="WeeklyTimetable">
 
