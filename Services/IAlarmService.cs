@@ -19,4 +19,10 @@ public interface IAlarmService
     /// Calling when not ringing is a no-op.
     /// </summary>
     void StopAlarm();
+
+    /// <summary>
+    /// Plays the user's selected alarm sound once (non-looping).
+    /// Used for transient alerts like timer completion.
+    /// </summary>
+    void PlayFocusEndSound();
 }

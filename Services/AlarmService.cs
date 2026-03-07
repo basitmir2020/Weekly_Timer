@@ -65,6 +65,60 @@ public sealed class AlarmService : IAlarmService
         try { Vibration.Default.Cancel(); } catch { /* best effort */ }
     }
 
+    /// <summary>Plays the user's alert sound once (non-looping).</summary>
+    public void PlayFocusEndSound()
+    {
+        _ = Task.Run(async () =>
+        {
+            bool played = false;
+#if ANDROID
+            played = TryPlayAndroidOneShot();
+#endif
+            if (!played)
+            {
+                try
+                {
+                    string wavPath = await EnsureAlarmWavAsync();
+                    using var stream = File.OpenRead(wavPath);
+                    using var player = _audioManager.CreatePlayer(stream);
+                    player.Loop = false;
+                    player.Volume = 1.0;
+                    player.Play();
+                    
+                    // Small delay to allow playback to finish before stream disposal
+                    // (Plugin.Maui.Audio needs the stream during play start)
+                    await Task.Delay(5000); 
+                }
+                catch { /* best effort */ }
+            }
+        });
+    }
+
+#if ANDROID
+    private bool TryPlayAndroidOneShot()
+    {
+        try
+        {
+            var uriString = Preferences.Get("alarm_sound_uri", null);
+            var androidUri = !string.IsNullOrWhiteSpace(uriString) 
+                ? Android.Net.Uri.Parse(uriString) 
+                : Android.Media.RingtoneManager.GetDefaultUri(Android.Media.RingtoneType.Notification);
+
+            if (androidUri == null) return false;
+
+            var ctx = Android.App.Application.Context;
+            var player = Android.Media.MediaPlayer.Create(ctx, androidUri);
+            if (player == null) return false;
+
+            player.Looping = false;
+            player.Completion += (s, e) => { player.Release(); };
+            player.Start();
+            return true;
+        }
+        catch { return false; }
+    }
+#endif
+
     // ── Private helpers ──────────────────────────────────────────────────────
 
     private async Task StartAlarmCoreAsync()

@@ -53,14 +53,18 @@ public partial class PomodoroViewModel : ObservableObject
 
     private int _totalSecondsForCurrentMode;
 
+    private readonly Services.IAlarmService _alarmService;
+
     /// <summary>
     /// Initializes timer infrastructure and defaults the view model to focus mode.
     /// </summary>
+    /// <param name="alarmService">Service used to play completion sounds.</param>
     /// <remarks>
     /// Side effects: creates a dispatcher timer and subscribes to its tick event.
     /// </remarks>
-    public PomodoroViewModel()
+    public PomodoroViewModel(Services.IAlarmService alarmService)
     {
+        _alarmService = alarmService;
         _timer = Application.Current.Dispatcher.CreateTimer();
         _timer.Interval = TimeSpan.FromSeconds(1);
         _timer.Tick += Timer_Tick;
@@ -253,6 +257,7 @@ public partial class PomodoroViewModel : ObservableObject
             _timer.Stop();
             IsRunning = false;
             HapticFeedback.Default.Perform(HapticFeedbackType.LongPress);
+            _alarmService.PlayFocusEndSound();
             TransitionToNextPhase();
         }
     }
