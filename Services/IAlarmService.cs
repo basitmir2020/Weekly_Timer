@@ -25,4 +25,14 @@ public interface IAlarmService
     /// Used for transient alerts like timer completion.
     /// </summary>
     void PlayFocusEndSound();
+
+    /// <summary>
+    /// Starts a looping warning sound for the final countdown.
+    /// </summary>
+    void StartFocusWarningSound();
+
+    /// <summary>
+    /// Stops the focus warning sound.
+    /// </summary>
+    void StopFocusWarningSound();
 }

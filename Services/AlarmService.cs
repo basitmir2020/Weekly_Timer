@@ -13,9 +13,11 @@ public sealed class AlarmService : IAlarmService
 
     private volatile bool _isRinging;
     private IAudioPlayer? _player;
+    private IAudioPlayer? _warningPlayer;
 
 #if ANDROID
     private Android.Media.MediaPlayer? _mediaPlayer;
+    private Android.Media.MediaPlayer? _warningMediaPlayer;
 #endif
 
     private CancellationTokenSource? _vibrationCts;
@@ -113,6 +115,74 @@ public sealed class AlarmService : IAlarmService
             player.Looping = false;
             player.Completion += (s, e) => { player.Release(); };
             player.Start();
+            return true;
+        }
+        catch { return false; }
+    }
+#endif
+
+    /// <summary>Stops the focus warning sound.</summary>
+    public void StopFocusWarningSound()
+    {
+#if ANDROID
+        try
+        {
+            _warningMediaPlayer?.Stop();
+            _warningMediaPlayer?.Release();
+        }
+        catch { }
+        _warningMediaPlayer = null;
+#endif
+        try { _warningPlayer?.Stop(); } catch { }
+        _warningPlayer = null;
+    }
+
+    /// <summary>Starts a looping warning sound.</summary>
+    public void StartFocusWarningSound()
+    {
+        _ = Task.Run(async () =>
+        {
+            StopFocusWarningSound(); // Ensure clean start
+
+            bool played = false;
+#if ANDROID
+            played = TryPlayAndroidWarningLoop();
+#endif
+            if (!played)
+            {
+                try
+                {
+                    string wavPath = await EnsureAlarmWavAsync();
+                    using var stream = File.OpenRead(wavPath);
+                    _warningPlayer = _audioManager.CreatePlayer(stream);
+                    _warningPlayer.Loop = true;
+                    _warningPlayer.Volume = 0.5; // Lower volume for warning
+                    _warningPlayer.Play();
+                }
+                catch { }
+            }
+        });
+    }
+
+#if ANDROID
+    private bool TryPlayAndroidWarningLoop()
+    {
+        try
+        {
+            var uriString = Preferences.Get("alarm_sound_uri", null);
+            var androidUri = !string.IsNullOrWhiteSpace(uriString) 
+                ? Android.Net.Uri.Parse(uriString) 
+                : Android.Media.RingtoneManager.GetDefaultUri(Android.Media.RingtoneType.Notification);
+
+            if (androidUri == null) return false;
+
+            var ctx = Android.App.Application.Context;
+            _warningMediaPlayer = Android.Media.MediaPlayer.Create(ctx, androidUri);
+            if (_warningMediaPlayer == null) return false;
+
+            _warningMediaPlayer.Looping = true;
+            _warningMediaPlayer.SetVolume(0.5f, 0.5f); // Lower volume
+            _warningMediaPlayer.Start();
             return true;
         }
         catch { return false; }

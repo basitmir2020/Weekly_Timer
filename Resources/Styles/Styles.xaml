@@ -5,33 +5,33 @@
 
     <!-- Typographic Styles -->
     <Style TargetType="Label">
-        <Setter Property="TextColor" Value="{StaticResource TextBody}" />
+        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource TextBodyLight}, Dark={StaticResource TextBodyDark}}" />
         <Setter Property="FontFamily" Value="OpenSansRegular" />
         <Setter Property="FontSize" Value="{DynamicResource BaseFontSize}" />
     </Style>
 
     <Style x:Key="H1" TargetType="Label">
-        <Setter Property="TextColor" Value="{StaticResource TextHeading}" />
+        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource TextHeadingLight}, Dark={StaticResource TextHeadingDark}}" />
         <Setter Property="FontAttributes" Value="Bold" />
         <Setter Property="FontSize" Value="{DynamicResource HeroFontSize}" />
     </Style>
 
     <Style x:Key="H2" TargetType="Label">
-        <Setter Property="TextColor" Value="{StaticResource TextHeading}" />
+        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource TextHeadingLight}, Dark={StaticResource TextHeadingDark}}" />
         <Setter Property="FontAttributes" Value="Bold" />
         <Setter Property="FontSize" Value="{DynamicResource HeaderFontSize}" />
     </Style>
     
     <Style x:Key="MonoLabel" TargetType="Label">
-        <Setter Property="TextColor" Value="{StaticResource TextMuted}" />
-        <Setter Property="FontFamily" Value="OpenSansRegular" /> <!-- Placeholder for DMMono -->
+        <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource TextMutedLight}, Dark={StaticResource TextMutedDark}}" />
+        <Setter Property="FontFamily" Value="OpenSansRegular" />
         <Setter Property="FontSize" Value="{DynamicResource SmallFontSize}" />
     </Style>
 
     <!-- Layout & Component Styles -->
     <Style x:Key="CardStyle" TargetType="Border">
-        <Setter Property="BackgroundColor" Value="{StaticResource BgCardDim}" />
-        <Setter Property="Stroke" Value="{StaticResource BorderLight}" />
+        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource BgCardLight}, Dark={StaticResource BgCardDark}}" />
+        <Setter Property="Stroke" Value="{AppThemeBinding Light={StaticResource BorderLightLight}, Dark={StaticResource BorderLightDark}}" />
         <Setter Property="StrokeThickness" Value="1" />
         <Setter Property="StrokeShape" Value="RoundRectangle 12" />
         <Setter Property="Padding" Value="16" />
@@ -40,7 +40,7 @@
     
     <Style x:Key="PillStyle" TargetType="Border">
         <Setter Property="BackgroundColor" Value="Transparent" />
-        <Setter Property="Stroke" Value="{StaticResource BorderVisible}" />
+        <Setter Property="Stroke" Value="{AppThemeBinding Light={StaticResource BorderVisibleLight}, Dark={StaticResource BorderVisibleDark}}" />
         <Setter Property="StrokeThickness" Value="1" />
         <Setter Property="StrokeShape" Value="RoundRectangle 20" />
         <Setter Property="Padding" Value="12, 6" />

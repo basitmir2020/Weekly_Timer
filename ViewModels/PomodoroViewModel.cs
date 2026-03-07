@@ -51,6 +51,9 @@ public partial class PomodoroViewModel : ObservableObject
     [ObservableProperty]
     private bool _isCustomTimerVisible;
 
+    [ObservableProperty]
+    private bool _isWarningActive;
+
     private int _totalSecondsForCurrentMode;
 
     private readonly Services.IAlarmService _alarmService;
@@ -145,6 +148,16 @@ public partial class PomodoroViewModel : ObservableObject
     }
 
     /// <summary>
+    /// Stops the warning sound and hides the stop button.
+    /// </summary>
+    [RelayCommand]
+    private void StopWarning()
+    {
+        _alarmService.StopFocusWarningSound();
+        IsWarningActive = false;
+    }
+
+    /// <summary>
     /// Stops the current phase and immediately transitions to the next timer phase.
     /// </summary>
     /// <returns>None.</returns>
@@ -156,6 +169,7 @@ public partial class PomodoroViewModel : ObservableObject
     {
         _timer.Stop();
         IsRunning = false;
+        StopWarning();
         TransitionToNextPhase();
     }
 
@@ -171,6 +185,7 @@ public partial class PomodoroViewModel : ObservableObject
     {
         _timer.Stop();
         IsRunning = false;
+        StopWarning();
         CycleCount = 0;
         SetMode(TimerMode.Focus);
     }
@@ -250,12 +265,19 @@ public partial class PomodoroViewModel : ObservableObject
         {
             SecondsRemaining--;
             ProgressPct = ((double)SecondsRemaining / _totalSecondsForCurrentMode) * 100;
+
+            if (SecondsRemaining == 5)
+            {
+                IsWarningActive = true;
+                _alarmService.StartFocusWarningSound();
+            }
         }
         else
         {
             // Transition only after stopping to avoid duplicate ticks racing the phase change.
             _timer.Stop();
             IsRunning = false;
+            StopWarning();
             HapticFeedback.Default.Perform(HapticFeedbackType.LongPress);
             _alarmService.PlayFocusEndSound();
             TransitionToNextPhase();

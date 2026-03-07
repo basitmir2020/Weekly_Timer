@@ -106,6 +106,18 @@
                     HeightRequest="48" />
 
         </HorizontalStackLayout>
+
+        <Button Text="Stop Warning Sound"
+                Command="{Binding StopWarningCommand}"
+                IsVisible="{Binding IsWarningActive}"
+                BackgroundColor="{StaticResource AccentPurple}"
+                TextColor="{StaticResource BgPage}"
+                FontAttributes="Bold"
+                CornerRadius="24"
+                HorizontalOptions="Center"
+                WidthRequest="200"
+                HeightRequest="48"
+                Margin="0,16,0,0" />
         </VerticalStackLayout>
     </ScrollView>
 
