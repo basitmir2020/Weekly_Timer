@@ -144,10 +144,7 @@ public partial class GoalsViewModel : ObservableObject
     [RelayCommand]
     private async Task SaveReflectionAsync()
     {
-        // This method body was incomplete in the provided instruction.
-        // It's added as-is, but might need further implementation.
-        // For example: await _databaseService.SaveWeeklyReflectionAsync(Reflection);
-        System.Diagnostics.Debug.WriteLine($"SaveReflectionAsync called.");
+        await _databaseService.SaveWeeklyReflectionAsync(Reflection);
     }
 
     [RelayCommand]
