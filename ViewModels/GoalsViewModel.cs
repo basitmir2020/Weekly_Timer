@@ -15,6 +15,9 @@ public partial class GoalsViewModel : ObservableObject
     [ObservableProperty] private ObservableCollection<HabitCommitmentViewModel> _habits = new();
     
     [ObservableProperty] private string _weekDisplay = string.Empty;
+    [ObservableProperty] private WeeklyReflection _reflection = new();
+    
+    public List<string> Categories { get; } = new() { "work", "study", "exercise", "routine", "relax", "other" };
 
     private string WeekStart => GetMonday(DateTime.Today).ToString("yyyy-MM-dd");
 
@@ -61,6 +64,17 @@ public partial class GoalsViewModel : ObservableObject
             foreach (var h in habitModels)
             {
                 Habits.Add(new HabitCommitmentViewModel(h, _databaseService));
+            }
+
+            var reflectionModel = await _databaseService.GetWeeklyReflectionAsync(weekStartStr);
+            if (reflectionModel != null)
+            {
+                Reflection = reflectionModel;
+            }
+            else
+            {
+                Reflection = new WeeklyReflection { WeekStartDate = weekStartStr };
+                await _databaseService.SaveWeeklyReflectionAsync(Reflection);
             }
 
             _isLoaded = true;

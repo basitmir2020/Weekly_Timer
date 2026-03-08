@@ -81,4 +81,8 @@ public interface IDatabaseService
     Task<int> DeleteGoalSubtaskAsync(GoalSubtask subtask);
     Task<List<HabitCommitment>> GetHabitCommitmentsAsync(string weekStart);
     Task<int> SaveHabitCommitmentAsync(HabitCommitment habit);
+
+    // Weekly Reflection
+    Task<WeeklyReflection?> GetWeeklyReflectionAsync(string weekStart);
+    Task<int> SaveWeeklyReflectionAsync(WeeklyReflection reflection);
 }

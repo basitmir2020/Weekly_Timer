@@ -133,37 +133,96 @@
             
             <CollectionView ItemsSource="{Binding Habits}">
                 <CollectionView.ItemTemplate>
-                    <DataTemplate x:DataType="models:HabitCommitment">
+                    <DataTemplate x:DataType="vm:HabitCommitmentViewModel">
                         <Border Style="{StaticResource CardStyle}" Margin="0,0,0,8">
                             <Grid ColumnDefinitions="*, Auto" RowDefinitions="Auto, Auto">
-                                <Label Grid.Row="0" Grid.Column="0" Text="{Binding HabitName}" FontAttributes="Bold" VerticalOptions="Center" />
+                                <Label Grid.Row="0" Grid.Column="0" Text="{Binding Title}" FontAttributes="Bold" VerticalOptions="Center" />
                                 <Label Grid.Row="0" Grid.Column="1" Text="{Binding TargetFrequency, StringFormat='Target: {0}x'}" FontSize="11" VerticalOptions="Center" />
                                 
-                                <HorizontalStackLayout Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Spacing="4" Margin="0,8,0,0">
-                                    <!-- Simplified daily checks representation -->
-                                    <Label Text="M" FontSize="10" />
-                                    <CheckBox IsChecked="False" Scale="0.8" />
-                                    <Label Text="T" FontSize="10" />
-                                    <CheckBox IsChecked="False" Scale="0.8" />
-                                    <Label Text="W" FontSize="10" />
-                                    <CheckBox IsChecked="False" Scale="0.8" />
-                                    <Label Text="T" FontSize="10" />
-                                    <CheckBox IsChecked="False" Scale="0.8" />
-                                    <Label Text="F" FontSize="10" />
-                                    <CheckBox IsChecked="False" Scale="0.8" />
-                                    <Label Text="S" FontSize="10" />
-                                    <CheckBox IsChecked="False" Scale="0.8" />
-                                    <Label Text="S" FontSize="10" />
-                                    <CheckBox IsChecked="False" Scale="0.8" />
+                                <HorizontalStackLayout Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Spacing="2" Margin="0,8,0,0">
+                                    <VerticalStackLayout Spacing="0">
+                                        <Label Text="M" FontSize="9" HorizontalOptions="Center" />
+                                        <CheckBox IsChecked="{Binding Day0Checked, Mode=OneWay}" 
+                                                  Command="{Binding ToggleDayCommand}" CommandParameter="0" Scale="0.8" />
+                                    </VerticalStackLayout>
+                                    <VerticalStackLayout Spacing="0">
+                                        <Label Text="T" FontSize="9" HorizontalOptions="Center" />
+                                        <CheckBox IsChecked="{Binding Day1Checked, Mode=OneWay}" 
+                                                  Command="{Binding ToggleDayCommand}" CommandParameter="1" Scale="0.8" />
+                                    </VerticalStackLayout>
+                                    <VerticalStackLayout Spacing="0">
+                                        <Label Text="W" FontSize="9" HorizontalOptions="Center" />
+                                        <CheckBox IsChecked="{Binding Day2Checked, Mode=OneWay}" 
+                                                  Command="{Binding ToggleDayCommand}" CommandParameter="2" Scale="0.8" />
+                                    </VerticalStackLayout>
+                                    <VerticalStackLayout Spacing="0">
+                                        <Label Text="T" FontSize="9" HorizontalOptions="Center" />
+                                        <CheckBox IsChecked="{Binding Day3Checked, Mode=OneWay}" 
+                                                  Command="{Binding ToggleDayCommand}" CommandParameter="3" Scale="0.8" />
+                                    </VerticalStackLayout>
+                                    <VerticalStackLayout Spacing="0">
+                                        <Label Text="F" FontSize="9" HorizontalOptions="Center" />
+                                        <CheckBox IsChecked="{Binding Day4Checked, Mode=OneWay}" 
+                                                  Command="{Binding ToggleDayCommand}" CommandParameter="4" Scale="0.8" />
+                                    </VerticalStackLayout>
+                                    <VerticalStackLayout Spacing="0">
+                                        <Label Text="S" FontSize="9" HorizontalOptions="Center" />
+                                        <CheckBox IsChecked="{Binding Day5Checked, Mode=OneWay}" 
+                                                  Command="{Binding ToggleDayCommand}" CommandParameter="5" Scale="0.8" />
+                                    </VerticalStackLayout>
+                                    <VerticalStackLayout Spacing="0">
+                                        <Label Text="S" FontSize="9" HorizontalOptions="Center" />
+                                        <CheckBox IsChecked="{Binding Day6Checked, Mode=OneWay}" 
+                                                  Command="{Binding ToggleDayCommand}" CommandParameter="6" Scale="0.8" />
+                                    </VerticalStackLayout>
                                 </HorizontalStackLayout>
                             </Grid>
                         </Border>
                     </DataTemplate>
                 </CollectionView.ItemTemplate>
                 <CollectionView.EmptyView>
-                    <Button Text="+ Add Habit Commitment" BackgroundColor="Transparent" TextColor="{StaticResource AccentPurple}" BorderWidth="1" BorderColor="{StaticResource AccentPurple}" />
+                    <Button Text="+ Add Habit Commitment" Command="{Binding AddHabitCommand}"
+                            BackgroundColor="Transparent" TextColor="{StaticResource AccentPurple}" BorderWidth="1" BorderColor="{StaticResource AccentPurple}" />
                 </CollectionView.EmptyView>
             </CollectionView>
+        </VerticalStackLayout>
+
+        <!-- Weekly Reflection Section -->
+        <VerticalStackLayout Grid.Row="1" Spacing="12" Margin="0,24,0,32">
+            <Label Text="💭 Weekly Reflection" Style="{StaticResource H2}" />
+            <Label Text="Reflect on your progress to grow faster." 
+                   TextColor="{AppThemeBinding Light={StaticResource TextMutedLight}, Dark={StaticResource TextMutedDark}}" 
+                   FontSize="12" Margin="0,-8,0,0" />
+
+            <Border Style="{StaticResource CardStyle}">
+                <VerticalStackLayout Spacing="16">
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="Wins of the week" FontAttributes="Bold" FontSize="13" />
+                        <Editor Text="{Binding Reflection.Wins}" 
+                                Placeholder="What went well?" 
+                                AutoSize="TextChanges" HeightRequest="80" 
+                                BackgroundColor="Transparent" />
+                    </VerticalStackLayout>
+
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="Improvements for next week" FontAttributes="Bold" FontSize="13" />
+                        <Editor Text="{Binding Reflection.Improvements}" 
+                                Placeholder="What could be better?" 
+                                AutoSize="TextChanges" HeightRequest="80" 
+                                BackgroundColor="Transparent" />
+                    </VerticalStackLayout>
+
+                    <Grid ColumnDefinitions="*, Auto" RowDefinitions="Auto">
+                        <Label Text="Weekly Score (1-10)" VerticalOptions="Center" FontAttributes="Bold" FontSize="13" />
+                        <Entry Grid.Column="1" Text="{Binding Reflection.WeeklyScore}" 
+                               Keyboard="Numeric" WidthRequest="60" HorizontalTextAlignment="Center" />
+                    </Grid>
+
+                    <Button Text="Save Reflection" Command="{Binding SaveReflectionCommand}"
+                            BackgroundColor="{StaticResource AccentPurple}" TextColor="White" 
+                            CornerRadius="8" HeightRequest="40" />
+                </VerticalStackLayout>
+            </Border>
         </VerticalStackLayout>
     </Grid>
 </ContentPage>

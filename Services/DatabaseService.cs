@@ -54,6 +54,7 @@ public class DatabaseService : IDatabaseService
             await _connection.CreateTableAsync<WeeklyGoalItem>().ConfigureAwait(false);
             await _connection.CreateTableAsync<GoalSubtask>().ConfigureAwait(false);
             await _connection.CreateTableAsync<HabitCommitment>().ConfigureAwait(false);
+            await _connection.CreateTableAsync<WeeklyReflection>().ConfigureAwait(false);
         }
         finally
         {
@@ -249,5 +250,18 @@ public class DatabaseService : IDatabaseService
     {
         await EnsureReady();
         return await _connection!.InsertOrReplaceAsync(habit);
+    }
+
+    public async Task<WeeklyReflection?> GetWeeklyReflectionAsync(string weekStart)
+    {
+        await EnsureReady();
+        return await _connection!.Table<WeeklyReflection>().Where(r => r.WeekStartDate == weekStart).FirstOrDefaultAsync();
+    }
+
+    public async Task<int> SaveWeeklyReflectionAsync(WeeklyReflection reflection)
+    {
+        await EnsureReady();
+        if (reflection.Id != 0) return await _connection!.UpdateAsync(reflection);
+        return await _connection!.InsertAsync(reflection);
     }
 }
