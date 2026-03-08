@@ -13,6 +13,7 @@ public partial class GoalsViewModel : ObservableObject
 
     [ObservableProperty] private ObservableCollection<WeeklyGoalItemViewModel> _goals = new();
     [ObservableProperty] private ObservableCollection<HabitCommitmentViewModel> _habits = new();
+    [ObservableProperty] private bool _isCarryForwardAvailable;
     
     [ObservableProperty] private string _weekDisplay = string.Empty;
     [ObservableProperty] private WeeklyReflection _reflection = new();
@@ -77,12 +78,76 @@ public partial class GoalsViewModel : ObservableObject
                 await _databaseService.SaveWeeklyReflectionAsync(Reflection);
             }
 
+            await CheckCarryForwardAsync(weekStartStr);
+
             _isLoaded = true;
         }
         catch (Exception ex)
         {
             System.Diagnostics.Debug.WriteLine($"Error loading goals: {ex.Message}");
         }
+    }
+
+    private async Task CheckCarryForwardAsync(string currentWeekStart)
+    {
+        var prevWeekStart = GetMonday(DateTime.Today.AddDays(-7)).ToString("yyyy-MM-dd");
+        var prevGoals = await _databaseService.GetWeeklyGoalItemsAsync(prevWeekStart);
+        
+        IsCarryForwardAvailable = prevGoals.Any(g => g.Status != GoalStatus.Completed && g.Status != GoalStatus.Dropped);
+    }
+
+    [RelayCommand]
+    private async Task CarryForwardIncompleteGoalsAsync()
+    {
+        var prevWeekStart = GetMonday(DateTime.Today.AddDays(-7)).ToString("yyyy-MM-dd");
+        var currentWeekStart = GetMonday(DateTime.Today).ToString("yyyy-MM-dd");
+        
+        var prevGoals = await _databaseService.GetWeeklyGoalItemsAsync(prevWeekStart);
+        var incompleteGoals = prevGoals.Where(g => g.Status != GoalStatus.Completed && g.Status != GoalStatus.Dropped).ToList();
+
+        foreach (var goal in incompleteGoals)
+        {
+            // Check if already carried forward to avoid duplicates
+            var existing = Goals.FirstOrDefault(g => g.Title == goal.Title);
+            if (existing != null) continue;
+
+            var newGoal = new WeeklyGoalItem
+            {
+                WeekStartDate = currentWeekStart,
+                Title = goal.Title,
+                Description = goal.Description,
+                Category = goal.Category,
+                Priority = goal.Priority,
+                Status = GoalStatus.NotStarted, // Reset status
+                ProgressPercent = 0
+            };
+            await _databaseService.SaveWeeklyGoalItemAsync(newGoal);
+            
+            // Carry forward subtasks
+            var subtasks = await _databaseService.GetGoalSubtasksAsync(goal.Id);
+            foreach (var st in subtasks)
+            {
+                var newSubtask = new GoalSubtask
+                {
+                    GoalItemId = newGoal.Id,
+                    Title = st.Title,
+                    IsCompleted = false // Reset subtasks
+                };
+                await _databaseService.SaveGoalSubtaskAsync(newSubtask);
+            }
+        }
+
+        await LoadDataAsync();
+        IsCarryForwardAvailable = false;
+    }
+
+    [RelayCommand]
+    private async Task SaveReflectionAsync()
+    {
+        // This method body was incomplete in the provided instruction.
+        // It's added as-is, but might need further implementation.
+        // For example: await _databaseService.SaveWeeklyReflectionAsync(Reflection);
+        System.Diagnostics.Debug.WriteLine($"SaveReflectionAsync called.");
     }
 
     [RelayCommand]

@@ -22,8 +22,18 @@
     <Grid RowDefinitions="Auto, *, Auto" Padding="16">
         <!-- Header -->
         <VerticalStackLayout Grid.Row="0" Spacing="4" Margin="0,0,0,16">
-            <Label Text="🎯 Weekly Planning" Style="{StaticResource H2}" />
-            <Label Text="{Binding WeekDisplay}" Style="{StaticResource MonoLabel}" />
+            <Grid ColumnDefinitions="*, Auto">
+                <VerticalStackLayout Spacing="4">
+                    <Label Text="🎯 Weekly Planning" Style="{StaticResource H2}" />
+                    <Label Text="{Binding WeekDisplay}" Style="{StaticResource MonoLabel}" />
+                </VerticalStackLayout>
+                <Button Grid.Column="1" Text="Carry Forward" 
+                        Command="{Binding CarryForwardIncompleteGoalsCommand}"
+                        IsVisible="{Binding IsCarryForwardAvailable}"
+                        BackgroundColor="Transparent" TextColor="{StaticResource AccentPurple}"
+                        BorderWidth="1" BorderColor="{StaticResource AccentPurple}"
+                        FontSize="11" HeightRequest="32" Padding="8,0" VerticalOptions="Center" />
+            </Grid>
             <Label Text="Set priorities, track habits, and reflect on progress." 
                    TextColor="{AppThemeBinding Light={StaticResource TextMutedLight}, Dark={StaticResource TextMutedDark}}" 
                    FontSize="13" />

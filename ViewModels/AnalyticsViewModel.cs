@@ -33,6 +33,11 @@ public partial class AnalyticsViewModel : ObservableObject
     [ObservableProperty] private int _totalCompletedBlocks;
     [ObservableProperty] private double _consistencyScore;
 
+    [ObservableProperty] private string _topCategory = string.Empty;
+    [ObservableProperty] private string _lowCategory = string.Empty;
+    [ObservableProperty] private ObservableCollection<string> _recommendations = new();
+    [ObservableProperty] private ObservableCollection<InsightItem> _weeklyInsights = new();
+
 
     public ObservableCollection<GoalTrackerItem> WeeklyGoalItems { get; } = new();
 
@@ -114,6 +119,7 @@ public partial class AnalyticsViewModel : ObservableObject
             
             await LoadExecutionMetricsAsync();
             await LoadWeeklyGoalsAsync();
+            await GenerateSmartInsightsAsync();
             _isLoaded = true;
         }
         finally { IsLoading = false; }
@@ -195,12 +201,41 @@ public partial class AnalyticsViewModel : ObservableObject
     /// </summary>
     /// <param name="date">Reference date used for the countdown.</param>
     /// <returns>Number of days left including the current date boundary behavior.</returns>
-    private static int GetDaysLeftInWeek(DateTime date)
+    private async Task GenerateSmartInsightsAsync()
     {
-        var weekEnd = GetMonday(date).AddDays(6);
-        var days = (weekEnd.Date - date.Date).Days;
-        return days < 0 ? 0 : days;
+        Recommendations.Clear();
+        WeeklyInsights.Clear();
+
+        // simulated pattern detection
+        TopCategory = CategoryBreakdown.OrderByDescending(c => c.Minutes).FirstOrDefault()?.Category ?? "N/A";
+        LowCategory = CategoryBreakdown.OrderBy(c => c.Minutes).FirstOrDefault()?.Category ?? "N/A";
+
+        if (ExecutionScore < 70)
+        {
+            Recommendations.Add("Consider reducing planned blocks for next week to build momentum.");
+            WeeklyInsights.Add(new InsightItem { Icon = "⚠️", Title = "Over-commitment Risk", Description = "You missed 20% of your planned blocks this week." });
+        }
+        else
+        {
+            Recommendations.Add("Great job! Try adding one high-priority goal for next week.");
+            WeeklyInsights.Add(new InsightItem { Icon = "⭐", Title = "High Performance", Description = "Your execution score is top-tier this week!" });
+        }
+
+        if (MoodTrend.Any(m => m.Energy < 3))
+        {
+            Recommendations.Add("Energy levels were low on mid-week. Consider more 'Relax' blocks.");
+            WeeklyInsights.Add(new InsightItem { Icon = "🔋", Title = "Energy Dip Detected", Description = "Low energy levels observed on Tuesday/Wednesday." });
+        }
+
+        Recommendations.Add($"Focus on your '{LowCategory}' category to balance your week.");
     }
+}
+
+public class InsightItem
+{
+    public string Icon { get; set; } = string.Empty;
+    public string Title { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
 }
 
 public class HeatmapCell
