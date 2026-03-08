@@ -10,12 +10,12 @@ public partial class SettingsPage : ContentPage
     /// <param name="vm">Settings view model handling preferences and backup/restore actions.</param>
     public SettingsPage(SettingsViewModel vm) { InitializeComponent(); BindingContext = vm; }
 
-    protected override async void OnAppearing()
+    protected override void OnAppearing()
     {
         base.OnAppearing();
         if (BindingContext is SettingsViewModel vm)
         {
-            await vm.EnsureMasterScheduleLoadedAsync();
+            Dispatcher.Dispatch(async () => await vm.EnsureMasterScheduleLoadedAsync());
         }
     }
 }

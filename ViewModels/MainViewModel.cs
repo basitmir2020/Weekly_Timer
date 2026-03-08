@@ -139,29 +139,12 @@ public partial class MainViewModel : ObservableObject, IRecipient<WeeklyTimetabl
 
             EnsureActiveDayIsValid();
 
-            // 3. Setup Weekly Stats
+            // Populate the visible schedule first so the page can render without waiting on secondary services.
             UpdateWeekStats();
-
-            // 4. Force UI update for the Active Day on initial load
             ApplyActiveDay(ActiveDay);
-
-            // Keep streak storage consistent with today's completion state.
-            await SyncTodayStreakAsync();
-
-            // 5. Calculate Current Streak
-            if (!IsActiveDayToday())
-            {
-                CurrentStreak = await _streakService.GetCurrentStreakAsync();
-            }
-
-            // 6. Schedule notifications (best effort; should never block UI)
-            _ = SafeScheduleNotificationsAsync();
-
-            // 7. Start foreground alarm-check timer (fires every 30 s)
-            _alarmFiredKeys.Clear();
-            StartAlarmCheckTimer();
-            
             IsLoaded = true;
+
+            _ = FinishInitialLoadAsync();
         }
         catch (Exception ex)
         {
@@ -170,6 +153,38 @@ public partial class MainViewModel : ObservableObject, IRecipient<WeeklyTimetabl
         finally
         {
             _loadGate.Release();
+        }
+    }
+
+    /// <summary>
+    /// Completes non-visual startup work after the schedule UI has already been shown.
+    /// </summary>
+    /// <returns>A task that completes once deferred startup tasks have been attempted.</returns>
+    /// <remarks>
+    /// Side effects: updates streak state, schedules notifications, and starts the alarm timer.
+    /// </remarks>
+    private async Task FinishInitialLoadAsync()
+    {
+        try
+        {
+            // Let the first frame settle before doing storage/database/notification work.
+            await Task.Delay(250).ConfigureAwait(false);
+
+            await SyncTodayStreakAsync().ConfigureAwait(false);
+
+            if (!IsActiveDayToday())
+            {
+                CurrentStreak = await _streakService.GetCurrentStreakAsync().ConfigureAwait(false);
+            }
+
+            _ = SafeScheduleNotificationsAsync();
+
+            _alarmFiredKeys.Clear();
+            StartAlarmCheckTimer();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error during deferred MainViewModel initialization: {ex.Message}");
         }
     }
 
@@ -265,13 +280,49 @@ public partial class MainViewModel : ObservableObject, IRecipient<WeeklyTimetabl
     /// </remarks>
     public void Receive(WeeklyTimetable.Models.ScheduleChangedMessage message)
     {
-        if (message.Value)
+        if (!message.Value)
+            return;
+
+        _ = RefreshScheduleAsync();
+    }
+
+    /// <summary>
+    /// Reloads the saved schedule snapshot after settings edits without replaying full first-load initialization.
+    /// </summary>
+    /// <returns>A task that completes after schedule collections have been refreshed.</returns>
+    /// <remarks>
+    /// Side effects: replaces in-memory schedule data, refreshes visible collections, and reschedules notifications.
+    /// </remarks>
+    private async Task RefreshScheduleAsync()
+    {
+        await _loadGate.WaitAsync();
+        try
         {
-            MainThread.BeginInvokeOnMainThread(() => 
+            var customSchedule = await _persistenceService
+                .LoadStateAsync<Dictionary<string, List<ScheduleBlock>>>(STATE_KEY_V3)
+                .ConfigureAwait(false);
+
+            if (customSchedule == null || customSchedule.Count == 0)
+                return;
+
+            _fullSchedule = customSchedule;
+
+            await MainThread.InvokeOnMainThreadAsync(() =>
             {
-                IsLoaded = false;
-                _ = LoadDataAsync();
+                EnsureActiveDayIsValid();
+                UpdateWeekStats();
+                ApplyActiveDay(ActiveDay);
             });
+
+            _ = SafeScheduleNotificationsAsync();
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine($"Error while refreshing schedule: {ex.Message}");
+        }
+        finally
+        {
+            _loadGate.Release();
         }
     }
 
@@ -286,6 +337,8 @@ public partial class MainViewModel : ObservableObject, IRecipient<WeeklyTimetabl
     {
         try
         {
+            // Notification permission checks and schedule registration can be expensive on first launch.
+            await Task.Delay(250).ConfigureAwait(false);
             await ScheduleNotificationsAsync().ConfigureAwait(false);
         }
         catch (Exception ex)

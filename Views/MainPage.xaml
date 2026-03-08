@@ -40,11 +40,8 @@
                 </HorizontalStackLayout>
                 
                 <!-- 7 Mini Progress Bars Header (Bind to WeekStats) -->
-                <CollectionView ItemsSource="{Binding WeekStats}" HeightRequest="40" ItemSizingStrategy="MeasureFirstItem" SelectionMode="None">
-                    <CollectionView.ItemsLayout>
-                        <LinearItemsLayout Orientation="Horizontal" ItemSpacing="8" />
-                    </CollectionView.ItemsLayout>
-                    <CollectionView.ItemTemplate>
+                <HorizontalStackLayout BindableLayout.ItemsSource="{Binding WeekStats}" Spacing="8" HeightRequest="40">
+                    <BindableLayout.ItemTemplate>
                         <DataTemplate x:DataType="vm:DayOverviewViewModel">
                             <VerticalStackLayout Spacing="4" Opacity="0.8">
                                 <VerticalStackLayout.GestureRecognizers>
@@ -68,8 +65,8 @@
                                 </Border>
                             </VerticalStackLayout>
                         </DataTemplate>
-                    </CollectionView.ItemTemplate>
-                </CollectionView>
+                    </BindableLayout.ItemTemplate>
+                </HorizontalStackLayout>
             </VerticalStackLayout>
         </Border>
 
@@ -172,8 +169,8 @@
                 </ScrollView>
 
                 <!-- Schedule Blocks -->
-                <CollectionView x:Name="BlocksCollection" ItemsSource="{Binding FilteredBlocks}" ItemSizingStrategy="MeasureFirstItem" SelectionMode="None">
-                    <CollectionView.ItemTemplate>
+                <VerticalStackLayout x:Name="BlocksCollection" BindableLayout.ItemsSource="{Binding FilteredBlocks}" Spacing="0">
+                    <BindableLayout.ItemTemplate>
                         <DataTemplate x:DataType="models:ScheduleBlock">
                             <Grid ColumnDefinitions="58, 20, *" Margin="0, 0, 0, 12"
                                   Opacity="{Binding IsCompleted, Converter={StaticResource BoolToOpacityConverter}}">
@@ -210,8 +207,8 @@
                                 </Border>
                             </Grid>
                         </DataTemplate>
-                    </CollectionView.ItemTemplate>
-                </CollectionView>
+                    </BindableLayout.ItemTemplate>
+                </VerticalStackLayout>
 
                 <!-- Add New Block button (spec §8.14) -->
                 <Button Text="+ Add Block"

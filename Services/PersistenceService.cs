@@ -4,6 +4,8 @@ namespace WeeklyTimetable.Services;
 
 public class PersistenceService : IPersistenceService
 {
+    private readonly SemaphoreSlim _preferencesGate = new(1, 1);
+
     /// <summary>
     /// Serializes and saves state data to preferences storage.
     /// </summary>
@@ -14,20 +16,27 @@ public class PersistenceService : IPersistenceService
     /// <remarks>
     /// Side effects: writes serialized JSON to preferences.
     /// </remarks>
-    public Task SaveStateAsync<T>(string key, T data)
+    public async Task SaveStateAsync<T>(string key, T data)
     {
         try
         {
-            var json = JsonSerializer.Serialize(data);
-            Preferences.Default.Set(key, json);
+            var json = await Task.Run(() => JsonSerializer.Serialize(data)).ConfigureAwait(false);
+
+            await _preferencesGate.WaitAsync().ConfigureAwait(false);
+            try
+            {
+                Preferences.Default.Set(key, json);
+            }
+            finally
+            {
+                _preferencesGate.Release();
+            }
         }
         catch (Exception ex)
         {
             // Log or handle serialization/storage errors
             Console.WriteLine($"Error saving state for key {key}: {ex.Message}");
         }
-
-        return Task.CompletedTask;
     }
 
     /// <summary>
@@ -39,21 +48,31 @@ public class PersistenceService : IPersistenceService
     /// <remarks>
     /// Side effects: reads preferences storage and performs JSON deserialization.
     /// </remarks>
-    public Task<T?> LoadStateAsync<T>(string key)
+    public async Task<T?> LoadStateAsync<T>(string key)
     {
         try
         {
-            var json = Preferences.Default.Get<string?>(key, null);
-            if (string.IsNullOrEmpty(json))
-                return Task.FromResult<T?>(default);
+            string? json;
+            await _preferencesGate.WaitAsync().ConfigureAwait(false);
+            try
+            {
+                json = Preferences.Default.Get<string?>(key, null);
+            }
+            finally
+            {
+                _preferencesGate.Release();
+            }
 
-            return Task.FromResult<T?>(JsonSerializer.Deserialize<T>(json));
+            if (string.IsNullOrEmpty(json))
+                return default;
+
+            return await Task.Run(() => JsonSerializer.Deserialize<T>(json)).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
             // Log or handle deserialization errors (e.g., model changed)
             Console.WriteLine($"Error loading state for key {key}: {ex.Message}");
-            return Task.FromResult<T?>(default);
+            return default;
         }
     }
 

@@ -21,13 +21,13 @@ public partial class MainPage : ContentPage
     /// <remarks>
     /// Side effects: triggers asynchronous data loading through <see cref="MainViewModel"/>.
     /// </remarks>
-    protected override async void OnAppearing()
+    protected override void OnAppearing()
     {
         base.OnAppearing();
 
         if (BindingContext is MainViewModel vm)
         {
-            await vm.LoadDataAsync();
+            Dispatcher.Dispatch(async () => await vm.LoadDataAsync());
         }
     }
 }

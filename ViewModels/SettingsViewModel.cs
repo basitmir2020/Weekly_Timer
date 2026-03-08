@@ -114,12 +114,66 @@ public partial class SettingsViewModel : ObservableObject
             foreach (var b in blocks)
             {
                 // Each editor item writes through to the shared schedule dictionary.
-                DayBlocks.Add(new TemplateBlockEditor(b, async () => 
-                {
-                    await _persistence.SaveStateAsync("sched_v3", _masterSchedule);
-                }));
+                DayBlocks.Add(new TemplateBlockEditor(b, PersistMasterScheduleChangesAsync));
             }
         }
+    }
+
+    /// <summary>
+    /// Saves the edited master schedule and notifies listeners to refresh from the updated snapshot.
+    /// </summary>
+    /// <returns>A task that completes after the schedule has been normalized and persisted.</returns>
+    /// <remarks>
+    /// Side effects: sorts edited day blocks, recomputes durations, writes schedule state, and sends a refresh message.
+    /// </remarks>
+    private async Task PersistMasterScheduleChangesAsync()
+    {
+        NormalizeDayBlocks(SelectedDay);
+        await _persistence.SaveStateAsync("sched_v3", _masterSchedule).ConfigureAwait(false);
+        WeakReferenceMessenger.Default.Send(new ScheduleChangedMessage(true));
+    }
+
+    /// <summary>
+    /// Keeps a day's blocks in chronological order and recalculates inferred durations after time edits.
+    /// </summary>
+    /// <param name="dayName">The day whose blocks should be normalized.</param>
+    /// <returns>None.</returns>
+    private void NormalizeDayBlocks(string dayName)
+    {
+        if (!_masterSchedule.TryGetValue(dayName, out var blocks) || blocks.Count == 0)
+            return;
+
+        blocks.Sort(CompareBlocksByTime);
+
+        for (int i = 0; i < blocks.Count - 1; i++)
+        {
+            if (!TimeSpan.TryParse(blocks[i].Time, out var current) ||
+                !TimeSpan.TryParse(blocks[i + 1].Time, out var next))
+            {
+                continue;
+            }
+
+            if (next < current)
+                next = next.Add(TimeSpan.FromDays(1));
+
+            blocks[i].DurationMinutes = (int)(next - current).TotalMinutes;
+        }
+
+        if (blocks.Count > 0)
+        {
+            blocks[^1].DurationMinutes = (int)TimeSpan.FromHours(7.5).TotalMinutes;
+        }
+    }
+
+    private static int CompareBlocksByTime(ScheduleBlock a, ScheduleBlock b)
+    {
+        bool aValid = TimeSpan.TryParse(a.Time, out var aTime);
+        bool bValid = TimeSpan.TryParse(b.Time, out var bTime);
+
+        if (aValid && bValid) return aTime.CompareTo(bTime);
+        if (aValid) return -1;
+        if (bValid) return 1;
+        return 0;
     }
 
     /// <summary>
@@ -301,10 +355,8 @@ public partial class TemplateBlockEditor : ObservableObject
 
             if (_onChanged != null)
             {
-                await _onChanged.Invoke();
+                await _onChanged.Invoke().ConfigureAwait(false);
             }
-
-            WeakReferenceMessenger.Default.Send(new ScheduleChangedMessage(true));
         }
         catch (OperationCanceledException)
         {
