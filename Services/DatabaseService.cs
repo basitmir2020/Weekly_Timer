@@ -51,6 +51,9 @@ public class DatabaseService : IDatabaseService
             await _connection.CreateTableAsync<StreakRecord>().ConfigureAwait(false);
             await _connection.CreateTableAsync<DailyCheckIn>().ConfigureAwait(false);
             await _connection.CreateTableAsync<WeeklyGoal>().ConfigureAwait(false);
+            await _connection.CreateTableAsync<WeeklyGoalItem>().ConfigureAwait(false);
+            await _connection.CreateTableAsync<GoalSubtask>().ConfigureAwait(false);
+            await _connection.CreateTableAsync<HabitCommitment>().ConfigureAwait(false);
         }
         finally
         {
@@ -180,5 +183,71 @@ public class DatabaseService : IDatabaseService
     {
         await EnsureReady();
         return await _connection!.InsertOrReplaceAsync(goal);
+    }
+
+    public async Task<List<WeeklyGoalItem>> GetWeeklyGoalItemsAsync(string weekStart)
+    {
+        await EnsureReady();
+        return await _connection!.Table<WeeklyGoalItem>()
+            .Where(g => g.WeekStartDate == weekStart)
+            .OrderByDescending(g => g.Priority)
+            .ToListAsync();
+    }
+
+    public async Task<int> SaveWeeklyGoalItemAsync(WeeklyGoalItem item)
+    {
+        await EnsureReady();
+        item.UpdatedAt = DateTime.Now;
+        if (item.Id == 0)
+        {
+            item.CreatedAt = DateTime.Now;
+            return await _connection!.InsertAsync(item);
+        }
+        return await _connection!.UpdateAsync(item);
+    }
+
+    public async Task<int> DeleteWeeklyGoalItemAsync(WeeklyGoalItem item)
+    {
+        await EnsureReady();
+        return await _connection!.DeleteAsync(item);
+    }
+
+    public async Task<List<GoalSubtask>> GetGoalSubtasksAsync(int goalItemId)
+    {
+        await EnsureReady();
+        return await _connection!.Table<GoalSubtask>()
+            .Where(s => s.GoalItemId == goalItemId)
+            .ToListAsync();
+    }
+
+    public async Task<int> SaveGoalSubtaskAsync(GoalSubtask subtask)
+    {
+        await EnsureReady();
+        if (subtask.Id == 0)
+        {
+            subtask.CreatedAt = DateTime.Now;
+            return await _connection!.InsertAsync(subtask);
+        }
+        return await _connection!.UpdateAsync(subtask);
+    }
+
+    public async Task<int> DeleteGoalSubtaskAsync(GoalSubtask subtask)
+    {
+        await EnsureReady();
+        return await _connection!.DeleteAsync(subtask);
+    }
+
+    public async Task<List<HabitCommitment>> GetHabitCommitmentsAsync(string weekStart)
+    {
+        await EnsureReady();
+        return await _connection!.Table<HabitCommitment>()
+            .Where(h => h.WeekStartDate == weekStart)
+            .ToListAsync();
+    }
+
+    public async Task<int> SaveHabitCommitmentAsync(HabitCommitment habit)
+    {
+        await EnsureReady();
+        return await _connection!.InsertOrReplaceAsync(habit);
     }
 }

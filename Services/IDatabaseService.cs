@@ -71,4 +71,14 @@ public interface IDatabaseService
     /// <param name="goal">Weekly goal entity to persist.</param>
     /// <returns>Rows affected count.</returns>
     Task<int> SaveWeeklyGoalAsync(WeeklyGoal goal);
+
+    // New Goals Redesign methods
+    Task<List<WeeklyGoalItem>> GetWeeklyGoalItemsAsync(string weekStart);
+    Task<int> SaveWeeklyGoalItemAsync(WeeklyGoalItem item);
+    Task<int> DeleteWeeklyGoalItemAsync(WeeklyGoalItem item);
+    Task<List<GoalSubtask>> GetGoalSubtasksAsync(int goalItemId);
+    Task<int> SaveGoalSubtaskAsync(GoalSubtask subtask);
+    Task<int> DeleteGoalSubtaskAsync(GoalSubtask subtask);
+    Task<List<HabitCommitment>> GetHabitCommitmentsAsync(string weekStart);
+    Task<int> SaveHabitCommitmentAsync(HabitCommitment habit);
 }

@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:vm="clr-namespace:WeeklyTimetable.ViewModels"
              xmlns:converters="clr-namespace:WeeklyTimetable.Converters"
+             xmlns:models="clr-namespace:WeeklyTimetable.Models"
              x:Class="WeeklyTimetable.Views.GoalsPage"
              x:DataType="vm:GoalsViewModel"
              BackgroundColor="{AppThemeBinding Light={StaticResource BgPageLight}, Dark={StaticResource BgPageDark}}"
@@ -10,60 +11,101 @@
 
     <ContentPage.Resources>
         <ResourceDictionary>
-            <converters:BoolToStringConverter x:Key="BoolToStringConverter" />
+            <converters:EnumToColorConverter x:Key="EnumToColorConverter" />
+            <converters:GoalStatusToStringConverter x:Key="StatusToStringConverter" />
+            <converters:BoolToStrikethroughConverter x:Key="StrikethroughConverter" />
+            <converters:PercentToProgressConverter x:Key="PercentToProgressConverter" />
         </ResourceDictionary>
     </ContentPage.Resources>
 
-    <ScrollView>
-        <VerticalStackLayout Spacing="16" Padding="16">
-            <Label Text="🎯 This Week's Targets" Style="{StaticResource H2}" />
-            <Label Text="Set by Sunday. Review every Friday." TextColor="{AppThemeBinding Light={StaticResource TextMutedLight}, Dark={StaticResource TextMutedDark}}" FontSize="13" />
-
-            <!-- DSA Goal -->
-            <Border Style="{StaticResource CardStyle}">
-                <Grid ColumnDefinitions="*, Auto" RowDefinitions="Auto, Auto">
-                    <Label Grid.Row="0" Grid.Column="0" Text="🧠  DSA Topic" FontAttributes="Bold" />
-                    <Label Grid.Row="0" Grid.Column="1" Text="✓" IsVisible="{Binding DsaDone}" TextColor="{StaticResource SuccessGreen}" FontSize="20" />
-                    <Entry Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2"
-                           Placeholder="e.g. Binary Trees, Dynamic Programming"
-                           PlaceholderColor="{AppThemeBinding Light={StaticResource TextMutedLight}, Dark={StaticResource TextMutedDark}}"
-                           Text="{Binding DsaTopic}" TextColor="{AppThemeBinding Light={StaticResource TextBodyLight}, Dark={StaticResource TextBodyDark}}"
-                           BackgroundColor="Transparent" />
-                    <Button Grid.Row="1" Grid.Column="1" Text="{Binding DsaDone, Converter={StaticResource BoolToStringConverter}, ConverterParameter='Undo|Mark Done'}"
-                            Command="{Binding ToggleDsaCommand}"
-                            BackgroundColor="Transparent" TextColor="{StaticResource AccentPurple}" FontSize="12" />
-                </Grid>
-            </Border>
-
-            <!-- Web Dev Goal -->
-            <Border Style="{StaticResource CardStyle}">
-                <Grid ColumnDefinitions="*, Auto" RowDefinitions="Auto, Auto">
-                    <Label Grid.Row="0" Grid.Column="0" Text="💻  Web Dev Feature" FontAttributes="Bold" />
-                    <Label Grid.Row="0" Grid.Column="1" Text="✓" IsVisible="{Binding WebDevDone}" TextColor="{StaticResource SuccessGreen}" FontSize="20" />
-                    <Entry Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2"
-                           Placeholder="e.g. Build Auth system, Deploy on Vercel"
-                           PlaceholderColor="{AppThemeBinding Light={StaticResource TextMutedLight}, Dark={StaticResource TextMutedDark}}"
-                           Text="{Binding WebDevFeature}" TextColor="{AppThemeBinding Light={StaticResource TextBodyLight}, Dark={StaticResource TextBodyDark}}"
-                           BackgroundColor="Transparent" />
-                </Grid>
-            </Border>
-
-            <!-- Habit Goal -->
-            <Border Style="{StaticResource CardStyle}">
-                <Grid ColumnDefinitions="*, Auto" RowDefinitions="Auto, Auto">
-                    <Label Grid.Row="0" Grid.Column="0" Text="🌱  Habit Focus" FontAttributes="Bold" />
-                    <Label Grid.Row="0" Grid.Column="1" Text="✓" IsVisible="{Binding HabitDone}" TextColor="{StaticResource SuccessGreen}" FontSize="20" />
-                    <Entry Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2"
-                           Placeholder="e.g. Sleep by 10PM every night"
-                           PlaceholderColor="{AppThemeBinding Light={StaticResource TextMutedLight}, Dark={StaticResource TextMutedDark}}"
-                           Text="{Binding HabitFocus}" TextColor="{AppThemeBinding Light={StaticResource TextBodyLight}, Dark={StaticResource TextBodyDark}}"
-                           BackgroundColor="Transparent" />
-                </Grid>
-            </Border>
-
-            <Button Text="Save Goals" Command="{Binding SaveGoalsCommand}"
-                    BackgroundColor="{StaticResource AccentPurple}" TextColor="{AppThemeBinding Light={StaticResource BgPageLight}, Dark={StaticResource BgPageDark}}"
-                    FontAttributes="Bold" CornerRadius="12" HeightRequest="48" />
+    <Grid RowDefinitions="Auto, *, Auto" Padding="16">
+        <!-- Header -->
+        <VerticalStackLayout Grid.Row="0" Spacing="4" Margin="0,0,0,16">
+            <Label Text="🎯 Weekly Planning" Style="{StaticResource H2}" />
+            <Label Text="{Binding WeekDisplay}" Style="{StaticResource MonoLabel}" />
+            <Label Text="Set priorities, track habits, and reflect on progress." 
+                   TextColor="{AppThemeBinding Light={StaticResource TextMutedLight}, Dark={StaticResource TextMutedDark}}" 
+                   FontSize="13" />
         </VerticalStackLayout>
-    </ScrollView>
+
+        <!-- Goals List -->
+        <CollectionView Grid.Row="1" ItemsSource="{Binding Goals}">
+            <CollectionView.ItemsLayout>
+                <LinearItemsLayout Orientation="Vertical" ItemSpacing="12" />
+            </CollectionView.ItemsLayout>
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="vm:WeeklyGoalItemViewModel">
+                    <Border Style="{StaticResource CardStyle}">
+                        <Grid RowDefinitions="Auto, Auto, Auto, Auto" ColumnDefinitions="*, Auto">
+                            <!-- Category & Priority -->
+                            <HorizontalStackLayout Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Spacing="12" Margin="0,4">
+                                <BoxView WidthRequest="4" HeightRequest="16" 
+                                         Color="{Binding Priority, Converter={StaticResource EnumToColorConverter}}" 
+                                         VerticalOptions="Center" />
+                                <Picker Title="Category" 
+                                        ItemsSource="{Binding BindingContext.Categories, Source={RelativeSource AncestorType={x:Type vm:GoalsViewModel}}}"
+                                        SelectedItem="{Binding Category}"
+                                        FontSize="12" HeightRequest="35" WidthRequest="100" />
+                                <Picker Title="Priority"
+                                        ItemsSource="{Binding Source={RelativeSource None}, Converter={StaticResource EnumToValuesConverter}, ConverterParameter={x:Type models:GoalPriority}}"
+                                        SelectedItem="{Binding Priority}"
+                                        FontSize="12" HeightRequest="35" WidthRequest="100" />
+                            </HorizontalStackLayout>
+
+                            <!-- Description -->
+                            <Editor Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" 
+                                    Text="{Binding Description}" FontSize="13" Margin="0,4,0,8"
+                                    Placeholder="Goal description..."
+                                    AutoSize="TextChanges"
+                                    TextColor="{AppThemeBinding Light={StaticResource TextBodyLight}, Dark={StaticResource TextBodyDark}}" />
+
+                            <!-- Subtasks -->
+                            <CollectionView Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" 
+                                            ItemsSource="{Binding Subtasks}" 
+                                            Margin="0,0,0,8">
+                                <CollectionView.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:GoalSubtaskViewModel">
+                                        <Grid ColumnDefinitions="Auto, *" Padding="0,2">
+                                            <CheckBox IsChecked="{Binding IsCompleted}" 
+                                                      Command="{Binding ToggleCommand}"
+                                                      Color="{StaticResource AccentPurple}"
+                                                      VerticalOptions="Center" />
+                                            <Label Grid.Column="1" Text="{Binding Title}" 
+                                                   VerticalOptions="Center" FontSize="13"
+                                                   TextDecorations="{Binding IsCompleted, Converter={StaticResource StrikethroughConverter}}" />
+                                        </Grid>
+                                    </DataTemplate>
+                                </CollectionView.ItemTemplate>
+                            </CollectionView>
+
+                            <Button Grid.Row="2" Grid.Column="1" Text="+" Command="{Binding AddSubtaskCommand}"
+                                    BackgroundColor="Transparent" TextColor="{StaticResource AccentPurple}" 
+                                    FontSize="18" Padding="0" HeightRequest="30" WidthRequest="30" />
+
+                            <!-- Progress Bar -->
+                            <VerticalStackLayout Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" Spacing="4">
+                                <Grid ColumnDefinitions="*, Auto">
+                                    <Label Text="Progress" FontSize="11" TextColor="{AppThemeBinding Light={StaticResource TextMutedLight}, Dark={StaticResource TextMutedDark}}" />
+                                    <Label Grid.Column="1" Text="{Binding ProgressPercent, StringFormat='{0:F0}%'}" FontSize="11" FontAttributes="Bold" />
+                                </Grid>
+                                <ProgressBar Progress="{Binding ProgressPercent, Converter={StaticResource PercentToProgressConverter}}" 
+                                             ProgressColor="{StaticResource AccentPurple}" />
+                            </VerticalStackLayout>
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+            <CollectionView.EmptyView>
+                <VerticalStackLayout HorizontalOptions="Center" VerticalOptions="Center" Spacing="20">
+                    <Label Text="No goals set for this week yet." HorizontalTextAlignment="Center" />
+                    <Button Text="+ Add Goal" Command="{Binding AddGoalCommand}" />
+                </VerticalStackLayout>
+            </CollectionView.EmptyView>
+        </CollectionView>
+
+        <!-- Actions -->
+        <Button Grid.Row="2" Text="+ Add New Goal" Command="{Binding AddGoalCommand}"
+                BackgroundColor="{StaticResource AccentPurple}" TextColor="White" 
+                FontAttributes="Bold" CornerRadius="12" HeightRequest="48" Margin="0,16,0,0" />
+    </Grid>
 </ContentPage>
