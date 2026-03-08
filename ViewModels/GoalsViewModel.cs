@@ -12,7 +12,7 @@ public partial class GoalsViewModel : ObservableObject
     private bool _isLoaded;
 
     [ObservableProperty] private ObservableCollection<WeeklyGoalItemViewModel> _goals = new();
-    [ObservableProperty] private ObservableCollection<HabitCommitment> _habits = new();
+    [ObservableProperty] private ObservableCollection<HabitCommitmentViewModel> _habits = new();
     
     [ObservableProperty] private string _weekDisplay = string.Empty;
 
@@ -25,29 +25,42 @@ public partial class GoalsViewModel : ObservableObject
         WeekDisplay = $"{monday:MMM dd} - {monday.AddDays(6):MMM dd}";
     }
 
-    public Task EnsureLoadedAsync() => LoadAsync(forceReload: false);
+    public Task EnsureLoadedAsync() => LoadDataAsync();
 
-    private async Task LoadAsync(bool forceReload)
+    [RelayCommand]
+    private async Task AddHabitAsync()
     {
-        if (_isLoaded && !forceReload)
-            return;
+        var habit = new HabitCommitment
+        {
+            WeekStartDate = GetMonday(DateTime.Today).ToString("yyyy-MM-dd"),
+            Title = "New Habit",
+            TargetFrequency = 7
+        };
+        await _databaseService.SaveHabitCommitmentAsync(habit);
+        Habits.Add(new HabitCommitmentViewModel(habit, _databaseService));
+    }
+
+    private async Task LoadDataAsync()
+    {
+        var weekStartStr = GetMonday(DateTime.Today).ToString("yyyy-MM-dd");
+        WeekDisplay = $"Week of {GetMonday(DateTime.Today):MMM dd, yyyy}";
 
         try
         {
-            var items = await _databaseService.GetWeeklyGoalItemsAsync(WeekStart);
+            var goalModels = await _databaseService.GetWeeklyGoalItemsAsync(weekStartStr);
             Goals.Clear();
-            foreach (var item in items)
+            foreach (var m in goalModels)
             {
-                var vm = new WeeklyGoalItemViewModel(item, _databaseService);
+                var vm = new WeeklyGoalItemViewModel(m, _databaseService);
                 await vm.LoadSubtasksAsync();
                 Goals.Add(vm);
             }
 
-            var habitItems = await _databaseService.GetHabitCommitmentsAsync(WeekStart);
+            var habitModels = await _databaseService.GetHabitCommitmentsAsync(weekStartStr); // Corrected to plural
             Habits.Clear();
-            foreach (var h in habitItems)
+            foreach (var h in habitModels)
             {
-                Habits.Add(h);
+                Habits.Add(new HabitCommitmentViewModel(h, _databaseService));
             }
 
             _isLoaded = true;

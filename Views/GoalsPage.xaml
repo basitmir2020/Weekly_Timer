@@ -37,7 +37,7 @@
             <CollectionView.ItemTemplate>
                 <DataTemplate x:DataType="vm:WeeklyGoalItemViewModel">
                     <Border Style="{StaticResource CardStyle}">
-                        <Grid RowDefinitions="Auto, Auto, Auto, Auto" ColumnDefinitions="*, Auto">
+                        <Grid RowDefinitions="Auto, Auto, Auto, Auto, Auto" ColumnDefinitions="*, Auto">
                             <!-- Title & Status -->
                             <Entry Grid.Row="0" Grid.Column="0" Text="{Binding Title}" 
                                    FontAttributes="Bold" FontSize="16" Placeholder="Goal Title..."
@@ -76,7 +76,7 @@
                                     TextColor="{AppThemeBinding Light={StaticResource TextBodyLight}, Dark={StaticResource TextBodyDark}}" />
 
                             <!-- Subtasks -->
-                            <CollectionView Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" 
+                            <CollectionView Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" 
                                             ItemsSource="{Binding Subtasks}" 
                                             Margin="0,0,0,8">
                                 <CollectionView.ItemTemplate>
@@ -94,12 +94,12 @@
                                 </CollectionView.ItemTemplate>
                             </CollectionView>
 
-                            <Button Grid.Row="2" Grid.Column="1" Text="+" Command="{Binding AddSubtaskCommand}"
+                            <Button Grid.Row="3" Grid.Column="1" Text="+" Command="{Binding AddSubtaskCommand}"
                                     BackgroundColor="Transparent" TextColor="{StaticResource AccentPurple}" 
                                     FontSize="18" Padding="0" HeightRequest="30" WidthRequest="30" />
 
                             <!-- Progress Bar -->
-                            <VerticalStackLayout Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" Spacing="4">
+                            <VerticalStackLayout Grid.Row="4" Grid.Column="0" Grid.ColumnSpan="2" Spacing="4">
                                 <Grid ColumnDefinitions="*, Auto">
                                     <Label Text="Progress" FontSize="11" TextColor="{AppThemeBinding Light={StaticResource TextMutedLight}, Dark={StaticResource TextMutedDark}}" />
                                     <Label Grid.Column="1" Text="{Binding ProgressPercent, StringFormat='{0:F0}%'}" FontSize="11" FontAttributes="Bold" />
@@ -123,5 +123,47 @@
         <Button Grid.Row="2" Text="+ Add New Goal" Command="{Binding AddGoalCommand}"
                 BackgroundColor="{StaticResource AccentPurple}" TextColor="White" 
                 FontAttributes="Bold" CornerRadius="12" HeightRequest="48" Margin="0,16,0,0" />
+
+        <!-- Habit Commitments Section -->
+        <VerticalStackLayout Grid.Row="1" Spacing="12" Margin="0,24,0,0">
+            <Label Text="✅ Habit Commitments" Style="{StaticResource H2}" />
+            <Label Text="Small daily wins lead to big results." 
+                   TextColor="{AppThemeBinding Light={StaticResource TextMutedLight}, Dark={StaticResource TextMutedDark}}" 
+                   FontSize="12" Margin="0,-8,0,0" />
+            
+            <CollectionView ItemsSource="{Binding Habits}">
+                <CollectionView.ItemTemplate>
+                    <DataTemplate x:DataType="models:HabitCommitment">
+                        <Border Style="{StaticResource CardStyle}" Margin="0,0,0,8">
+                            <Grid ColumnDefinitions="*, Auto" RowDefinitions="Auto, Auto">
+                                <Label Grid.Row="0" Grid.Column="0" Text="{Binding HabitName}" FontAttributes="Bold" VerticalOptions="Center" />
+                                <Label Grid.Row="0" Grid.Column="1" Text="{Binding TargetFrequency, StringFormat='Target: {0}x'}" FontSize="11" VerticalOptions="Center" />
+                                
+                                <HorizontalStackLayout Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Spacing="4" Margin="0,8,0,0">
+                                    <!-- Simplified daily checks representation -->
+                                    <Label Text="M" FontSize="10" />
+                                    <CheckBox IsChecked="False" Scale="0.8" />
+                                    <Label Text="T" FontSize="10" />
+                                    <CheckBox IsChecked="False" Scale="0.8" />
+                                    <Label Text="W" FontSize="10" />
+                                    <CheckBox IsChecked="False" Scale="0.8" />
+                                    <Label Text="T" FontSize="10" />
+                                    <CheckBox IsChecked="False" Scale="0.8" />
+                                    <Label Text="F" FontSize="10" />
+                                    <CheckBox IsChecked="False" Scale="0.8" />
+                                    <Label Text="S" FontSize="10" />
+                                    <CheckBox IsChecked="False" Scale="0.8" />
+                                    <Label Text="S" FontSize="10" />
+                                    <CheckBox IsChecked="False" Scale="0.8" />
+                                </HorizontalStackLayout>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </CollectionView.ItemTemplate>
+                <CollectionView.EmptyView>
+                    <Button Text="+ Add Habit Commitment" BackgroundColor="Transparent" TextColor="{StaticResource AccentPurple}" BorderWidth="1" BorderColor="{StaticResource AccentPurple}" />
+                </CollectionView.EmptyView>
+            </CollectionView>
+        </VerticalStackLayout>
     </Grid>
 </ContentPage>
