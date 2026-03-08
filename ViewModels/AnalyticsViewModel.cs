@@ -14,6 +14,9 @@ public partial class AnalyticsViewModel : ObservableObject
 
     [ObservableProperty] private int _currentStreak;
     [ObservableProperty] private int _longestStreak;
+
+    [ObservableProperty] private int _currentStreak;
+    [ObservableProperty] private int _longestStreak;
     [ObservableProperty] private int _totalCompleteDays;
     [ObservableProperty] private ObservableCollection<HeatmapCell> _heatmapCells = new();
     [ObservableProperty] private ObservableCollection<MoodEntry> _moodTrend = new();
@@ -23,6 +26,13 @@ public partial class AnalyticsViewModel : ObservableObject
     [ObservableProperty] private bool _hasWeeklyGoals;
     [ObservableProperty] private string _goalCountdownText = string.Empty;
     [ObservableProperty] private string _goalsProgressText = string.Empty;
+    [ObservableProperty] private double _goalCompletionPercent;
+
+    [ObservableProperty] private double _executionScore;
+    [ObservableProperty] private int _totalPlannedBlocks;
+    [ObservableProperty] private int _totalCompletedBlocks;
+    [ObservableProperty] private double _consistencyScore;
+
 
     public ObservableCollection<GoalTrackerItem> WeeklyGoalItems { get; } = new();
 
@@ -102,6 +112,7 @@ public partial class AnalyticsViewModel : ObservableObject
 
             TotalCompleteDays = streakRecords.Count(s => s.IsComplete);
             
+            await LoadExecutionMetricsAsync();
             await LoadWeeklyGoalsAsync();
             _isLoaded = true;
         }
@@ -121,15 +132,20 @@ public partial class AnalyticsViewModel : ObservableObject
         HasWeeklyGoals = false;
         GoalCountdownText = string.Empty;
         GoalsProgressText = string.Empty;
+        GoalCompletionPercent = 0;
 
         var weekStart = GetMonday(DateTime.Today).ToString("yyyy-MM-dd");
-        var goal = await _databaseService.GetWeeklyGoalAsync(weekStart);
-        if (goal == null)
-            return;
-
-        AddGoalIfPresent("DSA Topic", goal.DSATopic, goal.DSADone);
-        AddGoalIfPresent("Web Dev", goal.WebDevFeature, goal.WebDevDone);
-        AddGoalIfPresent("Habit", goal.HabitFocus, goal.HabitDone);
+        var goals = await _databaseService.GetWeeklyGoalItemsAsync(weekStart);
+        
+        foreach (var goal in goals)
+        {
+            WeeklyGoalItems.Add(new GoalTrackerItem
+            {
+                Title = goal.Title,
+                GoalText = goal.Description,
+                IsDone = goal.Status == GoalStatus.Completed
+            });
+        }
 
         if (WeeklyGoalItems.Count == 0)
             return;
@@ -138,6 +154,7 @@ public partial class AnalyticsViewModel : ObservableObject
         int total = WeeklyGoalItems.Count;
         int daysLeft = GetDaysLeftInWeek(DateTime.Today);
 
+        GoalCompletionPercent = (double)completed / total * 100;
         GoalsProgressText = $"{completed}/{total} completed";
         GoalCountdownText = daysLeft == 0
             ? "Last day to complete this week's goals"
@@ -145,12 +162,6 @@ public partial class AnalyticsViewModel : ObservableObject
         HasWeeklyGoals = true;
     }
 
-    /// <summary>
-    /// Adds a goal item to the weekly tracker only when the goal text has meaningful content.
-    /// </summary>
-    /// <param name="title">Category title shown in the analytics panel.</param>
-    /// <param name="goalText">Raw goal text from persistence.</param>
-    /// <param name="isDone">Completion flag for the goal.</param>
     /// <returns>None.</returns>
     /// <remarks>
     /// Side effects: appends a new <see cref="GoalTrackerItem"/> to <see cref="WeeklyGoalItems"/>.

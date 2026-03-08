@@ -15,6 +15,7 @@
             <converters:GoalStatusToStringConverter x:Key="StatusToStringConverter" />
             <converters:BoolToStrikethroughConverter x:Key="StrikethroughConverter" />
             <converters:PercentToProgressConverter x:Key="PercentToProgressConverter" />
+            <converters:EnumToValuesConverter x:Key="EnumToValuesConverter" />
         </ResourceDictionary>
     </ContentPage.Resources>
 
@@ -37,6 +38,21 @@
                 <DataTemplate x:DataType="vm:WeeklyGoalItemViewModel">
                     <Border Style="{StaticResource CardStyle}">
                         <Grid RowDefinitions="Auto, Auto, Auto, Auto" ColumnDefinitions="*, Auto">
+                            <!-- Title & Status -->
+                            <Entry Grid.Row="0" Grid.Column="0" Text="{Binding Title}" 
+                                   FontAttributes="Bold" FontSize="16" Placeholder="Goal Title..."
+                                   TextColor="{AppThemeBinding Light={StaticResource TextHeadingLight}, Dark={StaticResource TextHeadingDark}}" />
+
+                            <Border Grid.Row="0" Grid.Column="1" Padding="8,2" CornerRadius="12"
+                                    BackgroundColor="{Binding Status, Converter={StaticResource EnumToColorConverter}}"
+                                    HorizontalOptions="End" VerticalOptions="Start">
+                                <Label Text="{Binding Status, Converter={StaticResource StatusToStringConverter}}" 
+                                       TextColor="White" FontSize="10" FontAttributes="Bold" />
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding ToggleStatusCommand}" />
+                                </Border.GestureRecognizers>
+                            </Border>
+
                             <!-- Category & Priority -->
                             <HorizontalStackLayout Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Spacing="12" Margin="0,4">
                                 <BoxView WidthRequest="4" HeightRequest="16" 
@@ -45,11 +61,11 @@
                                 <Picker Title="Category" 
                                         ItemsSource="{Binding BindingContext.Categories, Source={RelativeSource AncestorType={x:Type vm:GoalsViewModel}}}"
                                         SelectedItem="{Binding Category}"
-                                        FontSize="12" HeightRequest="35" WidthRequest="100" />
+                                        FontSize="12" HeightRequest="40" WidthRequest="110" />
                                 <Picker Title="Priority"
-                                        ItemsSource="{Binding Source={RelativeSource None}, Converter={StaticResource EnumToValuesConverter}, ConverterParameter={x:Type models:GoalPriority}}"
+                                        ItemsSource="{Binding Source={x:Null}, Converter={StaticResource EnumToValuesConverter}, ConverterParameter={x:Type models:GoalPriority}}"
                                         SelectedItem="{Binding Priority}"
-                                        FontSize="12" HeightRequest="35" WidthRequest="100" />
+                                        FontSize="12" HeightRequest="40" WidthRequest="110" />
                             </HorizontalStackLayout>
 
                             <!-- Description -->
