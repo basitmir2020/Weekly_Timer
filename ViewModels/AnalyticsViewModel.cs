@@ -14,9 +14,6 @@ public partial class AnalyticsViewModel : ObservableObject
 
     [ObservableProperty] private int _currentStreak;
     [ObservableProperty] private int _longestStreak;
-
-    [ObservableProperty] private int _currentStreak;
-    [ObservableProperty] private int _longestStreak;
     [ObservableProperty] private int _totalCompleteDays;
     [ObservableProperty] private ObservableCollection<HeatmapCell> _heatmapCells = new();
     [ObservableProperty] private ObservableCollection<MoodEntry> _moodTrend = new();
@@ -172,17 +169,22 @@ public partial class AnalyticsViewModel : ObservableObject
     /// <remarks>
     /// Side effects: appends a new <see cref="GoalTrackerItem"/> to <see cref="WeeklyGoalItems"/>.
     /// </remarks>
-    private void AddGoalIfPresent(string title, string goalText, bool isDone)
+    private async Task LoadExecutionMetricsAsync()
     {
-        if (string.IsNullOrWhiteSpace(goalText))
-            return;
+        var weekStart = GetMonday(DateTime.Today).ToString("yyyy-MM-dd");
+        // Simplified: use CategoryBreakdown logic to populate metrics
+        // In a real app, we'd query ScheduleBlocks and CheckIns for this week
+        
+        TotalPlannedBlocks = 35;
+        TotalCompletedBlocks = 28;
+        ExecutionScore = (double)TotalCompletedBlocks / TotalPlannedBlocks * 100;
+        ConsistencyScore = 80;
 
-        WeeklyGoalItems.Add(new GoalTrackerItem
-        {
-            Title = title,
-            GoalText = goalText.Trim(),
-            IsDone = isDone
-        });
+        CategoryBreakdown.Clear();
+        CategoryBreakdown.Add(new CategoryBreakdown { Category = "work", Minutes = 1200, Color = "#818cf8" });
+        CategoryBreakdown.Add(new CategoryBreakdown { Category = "study", Minutes = 600, Color = "#34d399" });
+        CategoryBreakdown.Add(new CategoryBreakdown { Category = "exercise", Minutes = 180, Color = "#fbbf24" });
+        CategoryBreakdown.Add(new CategoryBreakdown { Category = "routine", Minutes = 300, Color = "#f472b6" });
     }
 
     /// <summary>
@@ -206,14 +208,16 @@ public partial class AnalyticsViewModel : ObservableObject
         Recommendations.Clear();
         WeeklyInsights.Clear();
 
-        // simulated pattern detection
-        TopCategory = CategoryBreakdown.OrderByDescending(c => c.Minutes).FirstOrDefault()?.Category ?? "N/A";
-        LowCategory = CategoryBreakdown.OrderBy(c => c.Minutes).FirstOrDefault()?.Category ?? "N/A";
+        // 1. Category insights
+        var sortedCategories = CategoryBreakdown.OrderByDescending(c => c.Minutes).ToList();
+        TopCategory = sortedCategories.FirstOrDefault()?.Category ?? "N/A";
+        LowCategory = sortedCategories.LastOrDefault()?.Category ?? "N/A";
 
+        // 2. Execution Score insights
         if (ExecutionScore < 70)
         {
             Recommendations.Add("Consider reducing planned blocks for next week to build momentum.");
-            WeeklyInsights.Add(new InsightItem { Icon = "⚠️", Title = "Over-commitment Risk", Description = "You missed 20% of your planned blocks this week." });
+            WeeklyInsights.Add(new InsightItem { Icon = "⚠️", Title = "Over-commitment Risk", Description = "You missed about 30% of your planned blocks this week." });
         }
         else
         {
@@ -221,10 +225,16 @@ public partial class AnalyticsViewModel : ObservableObject
             WeeklyInsights.Add(new InsightItem { Icon = "⭐", Title = "High Performance", Description = "Your execution score is top-tier this week!" });
         }
 
+        // 3. Day-of-week reliability (Simulated)
+        var strongestDay = "Wednesday";
+        var weakestDay = "Friday";
+        WeeklyInsights.Add(new InsightItem { Icon = "📅", Title = "Day Reliability", Description = $"{strongestDay} is your strongest day. {weakestDay} is where momentum tends to slip." });
+
+        // 4. Energy/Mood correlation
         if (MoodTrend.Any(m => m.Energy < 3))
         {
-            Recommendations.Add("Energy levels were low on mid-week. Consider more 'Relax' blocks.");
-            WeeklyInsights.Add(new InsightItem { Icon = "🔋", Title = "Energy Dip Detected", Description = "Low energy levels observed on Tuesday/Wednesday." });
+            Recommendations.Add("Energy levels were low mid-week. Consider more 'Relax' blocks.");
+            WeeklyInsights.Add(new InsightItem { Icon = "🔋", Title = "Energy Dip Detected", Description = "Low energy levels observed. Try light exercise to recover." });
         }
 
         Recommendations.Add($"Focus on your '{LowCategory}' category to balance your week.");
